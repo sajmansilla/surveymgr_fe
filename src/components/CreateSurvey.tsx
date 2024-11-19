@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Button } from "./ui/button.tsx";
-import { Input } from "./ui/input.tsx";
-import { Label } from "./ui/label.tsx";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs.tsx";
-import { Checkbox } from "./ui/checkbox.tsx";
-import { Calendar } from "./ui/calendar.tsx";
+import { useNavigate } from 'react-router-dom';
+import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Label } from "@/components/ui/label.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
+import { Calendar } from "@/components/ui/calendar.tsx";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "./ui/popover.tsx";
-import { cn } from "../lib/utils.ts";
+} from "@/components/ui/popover.tsx";
+import { cn } from "@/lib/utils.ts";
 import { CalendarIcon } from 'lucide-react';
 
 interface Category {
@@ -26,6 +27,19 @@ interface Question {
   enabled: boolean;
 }
 
+interface Team {
+  id: number;
+  team_name: string;
+}
+
+interface Member {
+  person_id: number;
+  team_id: number;
+  role: string;
+  name: string;
+  email: string;
+}
+
 function CreateSurvey() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -35,6 +49,11 @@ function CreateSurvey() {
   const [surveyName, setSurveyName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<number | undefined>(undefined);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app';
@@ -72,6 +91,85 @@ function CreateSurvey() {
     setSelectedQuestions(prev => prev.filter(id => !categoryQuestions.map(q => q.id).includes(id)));
   };
 
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app';
+
+    fetch(`${apiUrl}/api/teams`)
+      .then(response => response.json())
+      .then(data => {
+        setTeams(data.teams);
+        setSelectedTeam(data.teams[0]?.id ?? null);
+      });
+
+      fetch(`${apiUrl}/api/teammembers`)
+      .then(response => response.json())
+      .then(data => {
+        const memberPromises = data.members.map(async (member: Member) => {
+          const response = await fetch(`${apiUrl}/api/people/${member.person_id}`);
+          const personData = await response.json();
+          return { ...member, ...personData.person }; // Combine member and person data
+        });
+
+        // Wait for all member data to be fetched and set state
+        Promise.all(memberPromises).then(updatedMembers => {
+          setMembers(updatedMembers);
+        });
+      });
+  }, []);
+
+  const handleSelectAllMembers = (teamId: number) => {
+    const teamMembers = members.filter(member => member.team_id === teamId);
+    setSelectedMembers(prev => [...new Set([...prev, ...teamMembers.map(member => member.person_id)])]);
+  };
+
+  const handleDeselectAllMembers = (teamId: number) => {
+    const teamMembers = members.filter(member => member.team_id === teamId);
+    setSelectedMembers(prev => prev.filter(id => !teamMembers.map(member => member.person_id).includes(id)));
+  };
+
+  const handleSaveDraft = async () => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app';
+  
+    // Prepare the list of team names with selected members
+    const teamNamesWithSelectedMembers = teams
+      .filter(team => {
+        // Get all selected members for this team
+        const teamMembers = members.filter(member => member.team_id === team.id);
+        // Check if any member of the team is selected
+        return teamMembers.some(member => selectedMembers.includes(member.person_id));
+      })
+      .map(team => team.team_name); // Map to just the team names
+  
+    const body = {
+      name: surveyName,
+      date_start: startDate ? format(startDate, "yyyy-MM-dd") : null,
+      date_end: endDate ? format(endDate, "yyyy-MM-dd") : null,
+      teams: teamNamesWithSelectedMembers, // Only send an array of team names
+    };
+  
+    try {
+      const response = await fetch(`${apiUrl}/api/survey`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+  
+      const result = await response.json();
+      console.log('Survey draft saved:', result);
+      alert('Survey draft saved successfully!');
+      navigate('/surveys');
+    } catch (error) {
+      console.error('Failed to save survey draft:', error);
+      alert('Failed to save survey draft. Please try again.');
+    }
+  };  
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Create New Survey</h1>
@@ -84,7 +182,7 @@ function CreateSurvey() {
               id="name"
               value={surveyName}
               disabled
-              className="w-20"  // Limit the Name input width to approximately 6 characters
+              className="w-20" // Limit the Name input width to approximately 6 characters
             />
           </div>
 
@@ -156,7 +254,7 @@ function CreateSurvey() {
           />
         </div>
 
-        {/* Tabs */}
+        {/* Categories and Questions Tabs */}
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
           <TabsList className="flex flex-wrap space-x-4 justify-start">
             {categories.map(category => (
@@ -195,11 +293,75 @@ function CreateSurvey() {
             </TabsContent>
           ))}
         </Tabs>
+      </div>
 
-        <div className="flex justify-end space-x-4">
-          <Button variant="outline">Save Survey Draft</Button>
-          <Button>Assign Teams</Button>
-        </div>
+      <div className="container mx-auto p-6">
+        {/* Existing Teams and Members Tabs */}
+        <Tabs
+          value={selectedTeam !== undefined ? String(selectedTeam) : ""}
+          onValueChange={(value) => setSelectedTeam(value ? parseInt(value) : undefined)}
+        >
+          <TabsList className="flex flex-wrap space-x-4 justify-start">
+            {teams.map(team => (
+              <TabsTrigger key={team.id} value={String(team.id)}>
+                {team.team_name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {teams.map(team => (
+            <TabsContent key={team.id} value={String(team.id)}>
+              <div className="h-[300px] overflow-y-auto mb-4 border border-gray-300 rounded-lg p-4 shadow-sm">
+                <table className="min-w-full">
+                  <thead>
+                    <tr>
+                      <th>Select</th>
+                      <th>Name</th>
+                      <th>Role</th>
+                      <th>E-mail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {members
+                      .filter(member => member.team_id === team.id)
+                      .map(member => (
+                        <tr key={member.person_id}>
+                          <td>
+                            <Checkbox
+                              id={`member-${member.person_id}`}
+                              checked={selectedMembers.includes(member.person_id)}
+                              onCheckedChange={(checked) => {
+                                setSelectedMembers(prev =>
+                                  checked
+                                    ? [...prev, member.person_id]
+                                    : prev.filter(id => id !== member.person_id)
+                                );
+                              }}
+                            />
+                          </td>
+                          <td>
+                            {member.name}
+                          </td>
+                          <td>{member.role}</td>
+                          <td>{member.email}</td>
+                        </tr>
+                      ))
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex space-x-2 border-t border-gray-200 pt-4">
+                <Button onClick={() => handleSelectAllMembers(team.id)}>Select All</Button>
+                <Button onClick={() => handleDeselectAllMembers(team.id)}>Deselect All</Button>
+              </div>
+            </TabsContent>
+
+          ))}
+        </Tabs>
+
+      </div>
+
+      <div className="flex justify-end space-x-4">
+        <Button onClick={handleSaveDraft}>Save Survey</Button>
       </div>
     </div>
   );

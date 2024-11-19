@@ -57,7 +57,7 @@ const SurveyDashboard: React.FC = () => {
   // Fetch survey data including participants, responses, and teams
   useEffect(() => {
     const fetchSurveyData = async () => {
-      const apiUrl = process.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app'
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app'
       const response = await fetch(`${apiUrl}/api/survey-dashboard`)
       const data = await response.json()
       setSurveyData(data.surveys)

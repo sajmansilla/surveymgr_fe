@@ -1,11 +1,11 @@
 // App.tsx
 
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import LandingPage from './components/LandingPage';
-import Surveys from './components/Surveys';
-import CreateSurvey from './components/CreateSurvey';
-import Report from './components/Report';
-import './App.css';
+import LandingPage from '@/components/LandingPage';
+import Surveys from '@/components/Surveys';
+import CreateSurvey from '@/components/CreateSurvey';
+import Report from '@/components/Report';
+import '@/App.css';
 
 function App() {
   return (
