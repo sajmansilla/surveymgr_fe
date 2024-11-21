@@ -79,3 +79,17 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+@font-face {
+  font-family: 'Hasklig';
+  src: url('/fonts/Hasklig-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Hasklig';
+  src: url('/fonts/Hasklig-Bold.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}

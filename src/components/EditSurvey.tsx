@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
@@ -49,46 +49,109 @@ interface Member {
   team_name: string;
 }
 
-function CreateSurvey() {
+function EditSurvey() {
+  const { id } = useParams<{ id: string }>();
   const [categories, setCategories] = useState<Category[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [surveyName, setSurveyName] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const [surveyName, setSurveyName] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
+    undefined
+  );
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<number | undefined>(undefined);
   const navigate = useNavigate();
 
+  const apiUrl =
+    import.meta.env.VITE_API_URL || "https://surveymgr-production.up.railway.app";
+
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app';
+    // Fetch survey data to populate fields
+    fetch(`${apiUrl}/api/survey/${id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setSurveyName(data.name);
+        setDescription(data.description);
+        setStartDate(new Date(data.date_start));
+        setEndDate(new Date(data.date_end));
+        setSelectedQuestions(data.questions.map((q: Question) => q.id));
+        setSelectedMembers(data.members.map((m: Member) => m.person_id));
+      });
+
+    // Fetch categories and questions
     fetch(`${apiUrl}/api/categories`)
-      .then(response => response.json())
-      .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         setCategories(data.category);
-        setSelectedCategory(data.category[0]?.category_id ?? null); // Set first category as default
+        setSelectedCategory(data.category[0]?.category_id ?? null);
       });
 
     fetch(`${apiUrl}/api/questions`)
-      .then(response => response.json())
-      .then(data => {
-        const enabledQuestions = data.questions
-          .filter((question: Question) => question.enabled)
-          .map((question: Question) => question.id); // Get the IDs of enabled questions
+      .then((response) => response.json())
+      .then((data) => {
         setQuestions(data.questions);
-        setSelectedQuestions(enabledQuestions); // Mark enabled questions as selected
       });
-  }, []);
 
-  useEffect(() => {
-    if (endDate) {
-      setSurveyName(format(endDate, 'MM.yy'));
+    // Fetch teams and members
+    fetch(`${apiUrl}/api/teams`)
+      .then((response) => response.json())
+      .then((data) => setTeams(data.teams));
+
+    fetch(`${apiUrl}/api/teammembers`)
+      .then((response) => response.json())
+      .then((data) => {
+        const memberPromises = data.members.map(async (member: Member) => {
+          const response = await fetch(`${apiUrl}/api/people/${member.person_id}`);
+          const personData = await response.json();
+          return { ...member, ...personData.person };
+        });
+        Promise.all(memberPromises).then(setMembers);
+      });
+  }, [id]);
+
+  const handleSaveSurvey = async () => {
+    const teamNamesWithSelectedMembers = teams
+      .filter((team) =>
+        members
+          .filter((member) => member.team_id === team.id)
+          .some((member) => selectedMembers.includes(member.person_id))
+      )
+      .map((team) => team.team_name);
+
+    const body = {
+      name: surveyName,
+      date_start: startDate ? format(startDate, "yyyy-MM-dd") : null,
+      date_end: endDate ? format(endDate, "yyyy-MM-dd") : null,
+      teams: teamNamesWithSelectedMembers,
+      description,
+      questions: selectedQuestions,
+    };
+
+    try {
+      const response = await fetch(`${apiUrl}/api/survey/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+
+      alert("Survey updated successfully!");
+      navigate("/surveys");
+    } catch (error) {
+      console.error("Failed to update survey:", error);
+      alert("Failed to update survey. Please try again.");
     }
-  }, [endDate]);
+  };
 
   const handleSelectAll = (categoryId: string) => {
     const categoryQuestions = questions.filter(q => q.category_id === categoryId);
@@ -100,32 +163,6 @@ function CreateSurvey() {
     setSelectedQuestions(prev => prev.filter(id => !categoryQuestions.map(q => q.id).includes(id)));
   };
 
-  useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app';
-
-    fetch(`${apiUrl}/api/teams`)
-      .then(response => response.json())
-      .then(data => {
-        setTeams(data.teams);
-        setSelectedTeam(data.teams[0]?.id ?? null);
-      });
-
-    fetch(`${apiUrl}/api/teammembers`)
-      .then(response => response.json())
-      .then(data => {
-        const memberPromises = data.members.map(async (member: Member) => {
-          const response = await fetch(`${apiUrl}/api/people/${member.person_id}`);
-          const personData = await response.json();
-          return { ...member, ...personData.person }; // Combine member and person data
-        });
-
-        // Wait for all member data to be fetched and set state
-        Promise.all(memberPromises).then(updatedMembers => {
-          setMembers(updatedMembers);
-        });
-      });
-  }, []);
-
   const handleSelectAllMembers = (teamId: number) => {
     const teamMembers = members.filter(member => member.team_id === teamId);
     setSelectedMembers(prev => [...new Set([...prev, ...teamMembers.map(member => member.person_id)])]);
@@ -136,54 +173,9 @@ function CreateSurvey() {
     setSelectedMembers(prev => prev.filter(id => !teamMembers.map(member => member.person_id).includes(id)));
   };
 
-  const handleSaveDraft = async () => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app';
-
-    // Prepare the list of team names with selected members
-    const teamNamesWithSelectedMembers = teams
-      .filter(team => {
-        // Get all selected members for this team
-        const teamMembers = members.filter(member => member.team_id === team.id);
-        // Check if any member of the team is selected
-        return teamMembers.some(member => selectedMembers.includes(member.person_id));
-      })
-      .map(team => team.team_name); // Map to just the team names
-
-    const body = {
-      name: surveyName,
-      date_start: startDate ? format(startDate, "yyyy-MM-dd") : null,
-      date_end: endDate ? format(endDate, "yyyy-MM-dd") : null,
-      teams: teamNamesWithSelectedMembers, // Only send an array of team names
-      created_by: 'Default User', // Hardcoded for now
-      description: description,
-    };
-
-    try {
-      const response = await fetch(`${apiUrl}/api/survey`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('Survey draft saved:', result);
-      alert('Survey draft saved successfully!');
-      navigate('/surveys');
-    } catch (error) {
-      console.error('Failed to save survey draft:', error);
-      alert('Failed to save survey draft. Please try again.');
-    }
-  };
-
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Create New Survey</h1>
+      <h1 className="text-3xl font-bold mb-6">Edit Survey</h1>
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
           {/* Name field */}
@@ -385,13 +377,15 @@ function CreateSurvey() {
           ))}
         </Tabs>
 
-      </div>
-
+        </div>
       <div className="flex justify-end space-x-4">
-        <Button onClick={handleSaveDraft}>Save Survey</Button>
+        <Button onClick={() => navigate("/surveys")} variant="outline">
+          Cancel
+        </Button>
+        <Button onClick={handleSaveSurvey}>Save Survey</Button>
       </div>
     </div>
   );
 }
 
-export default CreateSurvey;
+export default EditSurvey;

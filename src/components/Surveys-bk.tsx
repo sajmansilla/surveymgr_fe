@@ -52,6 +52,8 @@ function getQuarter(name: string): string {
 
 const SurveyDashboard: React.FC = () => {
   const [surveyData, setSurveyData] = useState<Survey[]>([]) // State to store all survey data
+  const [filteredSurveys, setFilteredSurveys] = useState<Survey[]>([]) // State for filtered survey data
+  const [filter, setFilter] = useState<string>('all') // State to store selected filter
   const navigate = useNavigate()
 
   // Fetch survey data including participants, responses, and teams
@@ -61,10 +63,29 @@ const SurveyDashboard: React.FC = () => {
       const response = await fetch(`${apiUrl}/api/survey-dashboard`)
       const data = await response.json()
       setSurveyData(data.surveys)
+      setFilteredSurveys(data.surveys) // Initialize filtered surveys with all surveys
     }
 
     fetchSurveyData()
   }, [])
+
+  // Filter surveys based on the selected filter
+  useEffect(() => {
+    const today = new Date()
+    let filtered: Survey[] = []
+
+    if (filter === 'active') {
+      filtered = surveyData.filter(survey => new Date(survey.dateEnd) > today)
+    } else if (filter === 'completed') {
+      filtered = surveyData.filter(survey => new Date(survey.dateEnd) <= today)
+    } else if (filter === 'draft') {
+      filtered = surveyData.filter(survey => !survey.dateEnd) // Assuming no end date means draft
+    } else {
+      filtered = surveyData // Show all surveys when 'all' is selected
+    }
+
+    setFilteredSurveys(filtered)
+  }, [filter, surveyData])
 
   return (
     <div className="p-6">
@@ -77,7 +98,7 @@ const SurveyDashboard: React.FC = () => {
       <div className="flex items-center gap-4 mb-8">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Filter by</span>
-          <Select defaultValue="all">
+          <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All surveys" />
             </SelectTrigger>
@@ -130,7 +151,7 @@ const SurveyDashboard: React.FC = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {surveyData.map(survey => (
+          {filteredSurveys.map(survey => (
             <TableRow key={survey.id}>
               <TableCell>
                 <div className="flex items-center gap-3">

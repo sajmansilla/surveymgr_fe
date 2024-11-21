@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="165"
+   height="141"
+   viewBox="0 0 165 141"
+   fill="none"
+   version="1.1"
+   id="svg13"
+   sodipodi:docname="survey logo2.svg"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs13" />
+  <sodipodi:namedview
+     id="namedview13"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="3.2393166"
+     inkscape:cx="49.547488"
+     inkscape:cy="119.00658"
+     inkscape:window-width="1104"
+     inkscape:window-height="730"
+     inkscape:window-x="259"
+     inkscape:window-y="38"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg13" />
+  <path
+     d="M29.3921 14.7039L29.3921 83.2961C29.3921 91.412 22.9061 98 14.8981 98C6.89147 98 0.39209 91.4135 0.39209 83.2961L0.39209 14.7039C0.39209 6.58653 6.88998 0 14.8981 0C18.9014 0 22.5253 1.6504 25.1513 4.31075C27.7639 6.97262 29.3921 10.646 29.3921 14.7039Z"
+     fill="#DB256E"
+     id="path1" />
+  <path
+     d="M74.3921 51.7812L74.3921 83.2188C74.3921 91.3773 67.9061 98 59.8981 98C51.89 98 45.3921 91.3788 45.3921 83.2188L45.3921 51.7812C45.3921 43.6227 51.89 37 59.8981 37C63.9014 37 67.5253 38.6591 70.1513 41.3335C72.7639 44.0093 74.3921 47.7019 74.3921 51.7812Z"
+     fill="#9231FE"
+     id="path2" />
+  <path
+     d="M119.392 72.8964L119.392 83.1036C119.392 91.3257 112.906 98 104.898 98C96.89 98 90.3921 91.3272 90.3921 83.1036L90.3921 72.8964C90.3921 64.6743 96.89 58 104.898 58C108.901 58 112.525 59.6721 115.151 62.3673C117.764 65.064 119.392 68.7854 119.392 72.8964Z"
+     fill="#5EC612"
+     id="path3" />
+  <path
+     d="M149.892 98C141.884 98 135.392 91.4189 135.392 83.3008L135.392 14.6992C135.392 6.58109 141.884 0 149.892 0C157.9 0 164.392 6.58109 164.392 14.6992L164.392 83.3008C164.391 91.4189 157.899 98 149.892 98Z"
+     fill="#EB5325"
+     id="path4" />
+  <path
+     d="M160.1 123.704C157.892 123.704 156.388 122.072 156.388 119.96C156.388 117.848 157.892 116.184 160.1 116.184C162.308 116.184 163.812 117.848 163.812 119.96C163.812 122.072 162.308 123.704 160.1 123.704ZM157.508 140.6L156.324 137.848C159.172 136.856 160.548 135.256 160.484 133.304C160.356 133.336 160.26 133.336 160.132 133.336C158.34 133.336 156.676 132.184 156.676 130.072C156.676 128.088 158.276 126.776 160.26 126.776C162.884 126.776 164.228 128.824 164.228 132.28C164.228 136.344 161.924 139.256 157.508 140.6Z"
+     fill="#148DEA"
+     id="path5" />
+  <path
+     d="M134.673 138.52V136.024H135.985C138.609 136.024 139.217 135.576 139.217 133.784C139.217 132.056 139.089 130.52 139.089 128.568C139.089 126.136 139.985 125.208 142.289 124.824V124.696C139.985 124.312 139.089 123.384 139.089 120.952C139.089 119.064 139.217 117.432 139.217 115.736C139.217 113.944 138.609 113.496 135.985 113.496H134.673V111H137.137C141.233 111 143.089 112.088 143.089 115.544C143.089 117.784 142.737 119.032 142.737 121.016C142.737 122.136 143.665 123.32 147.153 123.384V126.136C143.665 126.2 142.737 127.384 142.737 128.504C142.737 130.52 143.089 131.704 143.089 133.976C143.089 137.432 141.233 138.52 137.137 138.52H134.673Z"
+     fill="#148DEA"
+     id="path6" />
+  <path
+     d="M10.4081 138.52C6.31209 138.52 4.45609 137.432 4.45609 133.976C4.45609 131.704 4.77609 130.52 4.77609 128.504C4.77609 127.384 3.84809 126.2 0.39209 126.136V123.384C3.84809 123.32 4.77609 122.136 4.77609 121.016C4.77609 119.032 4.45609 117.784 4.45609 115.544C4.45609 112.088 6.31209 111 10.4081 111H12.8721V113.496H11.5601C8.90409 113.496 8.29609 113.944 8.29609 115.736C8.29609 117.432 8.45609 119.064 8.45609 120.952C8.45609 123.384 7.52809 124.312 5.25609 124.696V124.824C7.52809 125.208 8.45609 126.136 8.45609 128.568C8.45609 130.52 8.29609 132.056 8.29609 133.784C8.29609 135.576 8.90409 136.024 11.5601 136.024H12.8721V138.52H10.4081Z"
+     fill="#148DEA"
+     id="path13" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:21.7018px;font-family:Sans;-inkscape-font-specification:'Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#148dea;fill-opacity:1;stroke-width:1.80847"
+     x="12.852369"
+     y="124.18253"
+     id="text13"
+     transform="scale(0.9471796,1.055766)"><tspan
+       sodipodi:role="line"
+       id="tspan13"
+       x="12.852369"
+       y="124.18253"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:21.7018px;font-family:Sans;-inkscape-font-specification:'Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#148dea;fill-opacity:1;stroke-width:1.80847">surveyMgr</tspan></text>
+</svg>
