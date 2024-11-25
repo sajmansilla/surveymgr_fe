@@ -40,79 +40,134 @@ interface Team {
   team_name: string;
 }
 
+interface People {
+  id: number;
+  name: string;
+  email: string;
+}
+
 interface Member {
   person_id: number;
   team_id: number;
   role: string;
-  name: string;
-  email: string;
-  team_name: string;
+}
+
+interface Survey {
+  survey_id: string;
+  survey_name: string;
+  description: string;
+  date_start: string;
+  date_end: string;
 }
 
 function EditSurvey() {
-  const { id } = useParams<{ id: string }>();
+  const { survey_id } = useParams<{ survey_id: string }>();
+  const [survey, setSurvey] = useState<Survey | null>(null);
+  const [surveyName, setSurveyName] = useState<string>('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [surveyName, setSurveyName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
-    undefined
+  const [selectedCategory, setSelectedCategory] = useState(
+    categories.length > 0 ? categories[0].category_id : undefined
   );
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [people, setPeople] = useState<People[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<number | undefined>(undefined);
+  const [selectedTeam, setSelectedTeam] = useState<number | undefined>(
+    undefined);
   const navigate = useNavigate();
 
   const apiUrl =
     import.meta.env.VITE_API_URL || "https://surveymgr-production.up.railway.app";
 
   useEffect(() => {
-    // Fetch survey data to populate fields
-    fetch(`${apiUrl}/api/survey/${id}`)
-      .then((response) => response.json())
+    // Fetch teams to populate tabs.
+    fetch(`${apiUrl}/api/teams`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch teams");
+        const resp = response.json();
+        return resp
+      })
       .then((data) => {
-        setSurveyName(data.name);
-        setDescription(data.description);
-        setStartDate(new Date(data.date_start));
-        setEndDate(new Date(data.date_end));
-        setSelectedQuestions(data.questions.map((q: Question) => q.id));
-        setSelectedMembers(data.members.map((m: Member) => m.person_id));
+        setTeams(data.teams);
+
+        if (data.teams.length > 0) {
+          setSelectedTeam(data.teams[0].id);
+        }
+
       });
 
-    // Fetch categories and questions
+    // Fetch people to populate tabs.
+    fetch(`${apiUrl}/api/people`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch people");
+        const resp = response.json();
+        return resp
+      })
+      .then((data) => {
+        setPeople(data.people);
+      });
+
+    // Fetch members to populate tabs.
+    fetch(`${apiUrl}/api/teammembers`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch members");
+        const resp = response.json();
+        return resp
+      })
+      .then((data) => {
+        setMembers(data.members);
+      });
+
+    // Fetch categories to populate tabs.
     fetch(`${apiUrl}/api/categories`)
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch categories");
+        const resp = response.json();
+        return resp
+      })
       .then((data) => {
         setCategories(data.category);
-        setSelectedCategory(data.category[0]?.category_id ?? null);
+
+        if (data.category.length > 0) {
+          setSelectedCategory(data.category[0].category_id);
+        }
+
       });
 
+    // Fetch questions to populate tabs.
     fetch(`${apiUrl}/api/questions`)
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch questions");
+        const resp = response.json();
+        return resp
+      })
       .then((data) => {
         setQuestions(data.questions);
       });
 
-    // Fetch teams and members
-    fetch(`${apiUrl}/api/teams`)
-      .then((response) => response.json())
-      .then((data) => setTeams(data.teams));
-
-    fetch(`${apiUrl}/api/teammembers`)
-      .then((response) => response.json())
+    // Fetch survey data to populate fields.
+    fetch(`${apiUrl}/api/surveyedit/${survey_id}`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch survey");
+        const resp = response.json();
+        return resp
+      })
       .then((data) => {
-        const memberPromises = data.members.map(async (member: Member) => {
-          const response = await fetch(`${apiUrl}/api/people/${member.person_id}`);
-          const personData = await response.json();
-          return { ...member, ...personData.person };
-        });
-        Promise.all(memberPromises).then(setMembers);
+        setSurvey(data.survey);
+        setDescription(data.survey.description);
+        setStartDate(data.survey.date_start ? new Date(data.survey.date_start) : undefined);
+        setEndDate(data.survey.date_end ? new Date(data.survey.date_end) : undefined);
+        console.log(survey_id,data.members);
+        setSelectedMembers(data.members.map((m: Member) => m.person_id));
+        setSelectedQuestions(data.questions.map((q: Question) => q.id));
       });
-  }, [id]);
+
+  }, [survey_id]);
 
   const handleSaveSurvey = async () => {
     const teamNamesWithSelectedMembers = teams
@@ -124,16 +179,17 @@ function EditSurvey() {
       .map((team) => team.team_name);
 
     const body = {
-      name: surveyName,
+      name: survey?.survey_name,
       date_start: startDate ? format(startDate, "yyyy-MM-dd") : null,
       date_end: endDate ? format(endDate, "yyyy-MM-dd") : null,
       teams: teamNamesWithSelectedMembers,
       description,
       questions: selectedQuestions,
+      members: selectedMembers
     };
 
     try {
-      const response = await fetch(`${apiUrl}/api/survey/${id}`, {
+      const response = await fetch(`${apiUrl}/api/survey/${survey_id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -152,6 +208,12 @@ function EditSurvey() {
       alert("Failed to update survey. Please try again.");
     }
   };
+
+  useEffect(() => {
+    if (endDate) {
+      setSurveyName(format(endDate, 'MM.yy'));
+    }
+  }, [endDate]);
 
   const handleSelectAll = (categoryId: string) => {
     const categoryQuestions = questions.filter(q => q.category_id === categoryId);
@@ -256,9 +318,15 @@ function EditSurvey() {
             maxLength={255}
           />
         </div>
+      </div>
 
-        {/* Categories and Questions Tabs */}
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+      {/* Categories and Questions Tabs */}
+      <div className="container mx-auto p-6">
+        <Tabs
+          value={selectedCategory !== undefined ? selectedCategory : ""}
+          onValueChange={
+            (value) => setSelectedCategory(value ? value : undefined)
+          }>
           <TabsList className="flex flex-wrap space-x-4 justify-start">
             {categories.map(category => (
               <TabsTrigger key={category.category_id} value={category.category_id}>
@@ -298,12 +366,13 @@ function EditSurvey() {
         </Tabs>
       </div>
 
+      {/* Existing Teams and Members Tabs */}
       <div className="container mx-auto p-6">
-        {/* Existing Teams and Members Tabs */}
         <Tabs
           value={selectedTeam !== undefined ? String(selectedTeam) : ""}
-          onValueChange={(value) => setSelectedTeam(value ? parseInt(value) : undefined)}
-        >
+          onValueChange={
+            (value) => setSelectedTeam(value ? parseInt(value) : undefined)
+          }>
           <TabsList className="flex flex-wrap space-x-4 justify-start">
             {teams.map(team => (
               <TabsTrigger key={team.id} value={String(team.id)}>
@@ -343,10 +412,18 @@ function EditSurvey() {
                               }}
                             />
                           </TableCell>
-                          <TableCell>{member.name}</TableCell>
-                          <TableCell>{member.email}</TableCell>
-                          <TableCell>{member.role}</TableCell>
-                          <TableCell>{member.team_name}</TableCell>
+                          <TableCell>
+                            {people.find(person => person.id === member.person_id)?.name}
+                          </TableCell>
+                          <TableCell>
+                            {people.find(person => person.id === member.person_id)?.email}
+                          </TableCell>
+                          <TableCell>
+                            {member.role}
+                          </TableCell>
+                          <TableCell>
+                            {team.team_name}
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -376,8 +453,8 @@ function EditSurvey() {
 
           ))}
         </Tabs>
+      </div>
 
-        </div>
       <div className="flex justify-end space-x-4">
         <Button onClick={() => navigate("/surveys")} variant="outline">
           Cancel
