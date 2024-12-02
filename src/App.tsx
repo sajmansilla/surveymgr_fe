@@ -3,6 +3,7 @@ import { LandingPage } from '@/components/landingpage';
 import { SurveyDashboard } from '@/components/surveys';
 import AddPeople from '@/components/AddPeople';
 import AddTeams from '@/components/AddTeams';
+import AddTeamMembers from '@/components/AddTeamMembers';
 import CreateSurvey from '@/components/CreateSurvey';
 import Report from '@/components/Report';
 import EditSurvey from '@/components/EditSurvey-bk';
@@ -34,6 +35,7 @@ function App() {
           <Route path="/surveys" element={<SurveyDashboard />} />
           <Route path="/people" element={<AddPeople />} />
           <Route path="/teams" element={<AddTeams />} />
+          <Route path="/assignments" element={<AddTeamMembers />} />
           <Route path="/create-survey" element={<CreateSurvey />} />
           <Route path="/report" element={<Report />} />
           <Route path="/edit-survey/:survey_id" element={<EditSurvey />} />
