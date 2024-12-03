@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { LandingPage } from '@/components/landingpage';
-import { SurveyDashboard } from '@/components/surveys';
+import { SurveyDashboard, SurveyPreview } from '@/components/surveys';
 import AddPeople from '@/components/AddPeople';
 import AddTeams from '@/components/AddTeams';
 import AddTeamMembers from '@/components/AddTeamMembers';
@@ -36,6 +36,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/surveys" element={<SurveyDashboard />} />
+          <Route path="/survey/:survey_id" element={<SurveyPreview />} />
           <Route path="/people" element={<AddPeople />} />
           <Route path="/teams" element={<AddTeams />} />
           <Route path="/assignments" element={<AddTeamMembers />} />
