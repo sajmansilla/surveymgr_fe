@@ -9,6 +9,7 @@ import AddQuestions from '@/components/AddQuestions';
 import CreateSurvey from '@/components/CreateSurvey';
 import Report from '@/components/Report';
 import EditSurvey from '@/components/EditSurvey-bk';
+//import { EditSurvey } from '@/components/editsurvey';
 import TeamGaiaSurvey from '@/components/app_survey';
 import Header from '@/components/Header';
 import '@/App.css';

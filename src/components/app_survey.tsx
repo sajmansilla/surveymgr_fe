@@ -36,6 +36,7 @@ const openEndedQuestions = [
 // Mock API function to simulate saving the survey responses
 const saveSurveyResponses = async (responses: any) => {
   // Simulate API call delay
+  console.log('Saving survey responses...', responses);
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   // Simulate API response
