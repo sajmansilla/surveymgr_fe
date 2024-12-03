@@ -1,88 +1,84 @@
-import { format } from 'date-fns';
-import { Button } from '@/components/ui/button.tsx';
-import { Input } from '@/components/ui/input.tsx';
-import { Label } from '@/components/ui/label.tsx';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar.tsx';
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
 
-interface SurveyFormProps {
-  surveyName: string;
-  description: string;
-  startDate: Date | undefined;
-  endDate: Date | undefined;
-  setSurveyName: React.Dispatch<React.SetStateAction<string>>;
-  setDescription: React.Dispatch<React.SetStateAction<string>>;
-  setStartDate: React.Dispatch<React.SetStateAction<Date | undefined>>;
-  setEndDate: React.Dispatch<React.SetStateAction<Date | undefined>>;
+interface Question {
+  id: string;
+  question: string;
+  category_id: string;
+  enabled: boolean;
 }
 
-export const SurveyForm: React.FC<SurveyFormProps> = ({
-  surveyName,
-  description,
-  startDate,
-  endDate,
-  setSurveyName,
-  setDescription,
-  setStartDate,
-  setEndDate,
-}) => {
+// Define the type for surveyData
+interface SurveyData {
+  startDate?: Date;
+  endDate?: Date;
+  description: string;
+  surveyName: string;
+  questions: Question[];
+}
+
+interface DatePickerProps {
+  selectedDate: Date | undefined;
+  onChange: (date: Date | undefined) => void;
+}
+
+export function SurveyDetailsForm({ surveyData }: { surveyData: SurveyData }) {
+  const [startDate, setStartDate] = useState<Date | undefined>(surveyData.startDate);
+  const [endDate, setEndDate] = useState<Date | undefined>(surveyData.endDate);
+  const [description, setDescription] = useState<string>(surveyData.description);
+
+  useEffect(() => {
+    if (endDate) {
+      const formattedDate = format(endDate, "MM.yy");
+      console.log(`Survey name set to: ${formattedDate}`);
+    }
+  }, [endDate]);
+
   return (
     <div className="space-y-6">
-      {/* Name Field */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-4">
+        {/* Nombre */}
         <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          value={surveyName}
-          onChange={(e) => setSurveyName(e.target.value)}
-          className="w-20"
-        />
-      </div>
+        <Input id="name" value={surveyData.surveyName} disabled />
 
-      {/* Start Date */}
-      <div className="flex items-center space-x-2">
+        {/* Fecha de inicio */}
         <Label htmlFor="start-date">Start Date</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-32 justify-start text-left font-normal">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {startDate ? format(startDate, "dd.MM.yyyy") : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            <Calendar mode="single" selected={startDate} onSelect={setStartDate} />
-          </PopoverContent>
-        </Popover>
-      </div>
+        <DatePicker selectedDate={startDate} onChange={setStartDate} />
 
-      {/* End Date */}
-      <div className="flex items-center space-x-2">
+        {/* Fecha de fin */}
         <Label htmlFor="end-date">End Date</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-32 justify-start text-left font-normal">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {endDate ? format(endDate, "dd.MM.yyyy") : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            <Calendar mode="single" selected={endDate} onSelect={setEndDate} />
-          </PopoverContent>
-        </Popover>
+        <DatePicker selectedDate={endDate} onChange={setEndDate} />
       </div>
 
-      {/* Description */}
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Input
-          id="description"
-          type="text"
-          placeholder="Description..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
+      {/* Descripción */}
+      <Label htmlFor="description">Description</Label>
+      <Input
+        id="description"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
     </div>
   );
-};
+}
+
+function DatePicker({ selectedDate, onChange }: DatePickerProps) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="w-32">
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {selectedDate ? format(selectedDate, "dd.MM.yyyy") : "Pick a date"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent>
+        <Calendar mode="single" selected={selectedDate} onSelect={onChange} />
+      </PopoverContent>
+    </Popover>
+  );
+}
