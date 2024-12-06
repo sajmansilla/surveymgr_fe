@@ -2,7 +2,7 @@ export default function Header() {
   return (
     <div className="flex flex-col items-center space-y-6">
       <img
-        src="/survey logo.svg"
+        src="/survey_logo.svg"
         alt="SurveyMGR Logo"
         className="w-auto h-24 logo"
       />

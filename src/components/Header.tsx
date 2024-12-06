@@ -14,7 +14,7 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             <Link to="/" className="flex items-center space-x-4">
               <img
-                src="/survey logo.svg"
+                src="/survey_logo.svg"
                 alt="SurveyMGR Logo"
                 className="h-12 w-auto"
               />
