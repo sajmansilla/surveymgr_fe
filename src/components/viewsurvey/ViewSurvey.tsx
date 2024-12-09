@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils.ts";
-import { CalendarIcon, Pencil, Archive, Trash2 } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 
 interface Category {
   category_id: string;
@@ -60,6 +60,12 @@ interface Survey {
   date_end: string;
 }
 
+interface SelectedMember {
+  person_id: number;
+  team_id: number;
+}
+
+
 const ViewSurvey: React.FC = () => {
   const { survey_id } = useParams<{ survey_id: string }>();
   const [isReadOnly, setIsReadOnly] = useState(true);
@@ -82,7 +88,7 @@ const ViewSurvey: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [people, setPeople] = useState<People[]>([]);
-  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<SelectedMember[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<number | undefined>(
     undefined);
   const navigate = useNavigate();
@@ -101,7 +107,18 @@ const ViewSurvey: React.FC = () => {
         setEndDate(data.survey.date_end ? new Date(data.survey.date_end) : undefined);
 
         // Questions
-        setQuestions(data.questions);
+        fetch(`${apiUrl}/api/questions`)
+          .then((response) => {
+            if (!response.ok) throw new Error("Failed to fetch questions");
+            const resp = response.json();
+            return resp
+          })
+          .then((data) => {
+            setQuestions(data.questions);
+
+          });
+
+        // Selected Questions
         setSelectedQuestions(data.questions.map((q: Question) => q.id));
 
         // Fetch categories to populate tabs.
@@ -123,8 +140,36 @@ const ViewSurvey: React.FC = () => {
         // Included Teams
         setTeamsIncluded(data.teamsIncluded);
 
+        // Fetch Team Members to populate tabs.
+        fetch(`${apiUrl}/api/teammembers`)
+          .then((response) => {
+            if (!response.ok) throw new Error("Failed to fetch team members");
+            const resp = response.json();
+            return resp
+          })
+          .then((data) => {
+            setMembers(data.members);
+
+          });
+
         // Included participants
-        setMembers(data.members);
+        setSelectedMembers(data.members);
+
+      });
+
+    // Fetch teams to populate tabs.
+    fetch(`${apiUrl}/api/teams`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch teams");
+        const resp = response.json();
+        return resp
+      })
+      .then((data) => {
+        setTeams(data.teams);
+
+        if (data.teams.length > 0) {
+          setSelectedTeam(data.teams[0].id);
+        }
 
       });
 
@@ -155,13 +200,6 @@ const ViewSurvey: React.FC = () => {
         setPeople(data.people);
       });
 
-    fetch(`${apiUrl}/api/questions`)
-      .then((response) => response.json())
-      .then((data) => setQuestions(data.questions));
-
-    fetch(`${apiUrl}/api/categories`)
-      .then((response) => response.json())
-      .then((data) => setCategories(data.category));
   }, [survey_id]);
 
   const handleEditSurvey = () => {
@@ -200,7 +238,13 @@ const ViewSurvey: React.FC = () => {
       .filter((team) =>
         members
           .filter((member) => member.team_id === team.id)
-          .some((member) => selectedMembers.includes(member.person_id))
+          .some((member) =>
+            selectedMembers.some(
+              (selected) =>
+                selected.person_id === member.person_id &&
+                selected.team_id === member.team_id
+            )
+          )
       )
       .map((team) => team.team_name);
 
@@ -211,7 +255,7 @@ const ViewSurvey: React.FC = () => {
       teams: teamNamesWithSelectedMembers,
       description,
       questions: selectedQuestions,
-      members: selectedMembers
+      members: selectedMembers,
     };
 
     try {
@@ -246,13 +290,34 @@ const ViewSurvey: React.FC = () => {
   };
 
   const handleSelectAllMembers = (teamId: number) => {
-    const teamMembers = members.filter(member => member.team_id === teamId);
-    setSelectedMembers(prev => [...new Set([...prev, ...teamMembers.map(member => member.person_id)])]);
+    const teamMembers = members
+      .filter((member) => member.team_id === teamId)
+      .map((member) => ({
+        person_id: member.person_id,
+        team_id: member.team_id,
+      }));
+
+    setSelectedMembers((prev) => {
+      const existingSet = new Set(prev.map((m) => `${m.person_id}-${m.team_id}`));
+      const newMembers = teamMembers.filter(
+        (m) => !existingSet.has(`${m.person_id}-${m.team_id}`)
+      );
+      return [...prev, ...newMembers];
+    });
   };
 
   const handleDeselectAllMembers = (teamId: number) => {
-    const teamMembers = members.filter(member => member.team_id === teamId);
-    setSelectedMembers(prev => prev.filter(id => !teamMembers.map(member => member.person_id).includes(id)));
+    const teamMembers = members.filter((member) => member.team_id === teamId);
+    setSelectedMembers((prev) =>
+      prev.filter(
+        (selected) =>
+          !teamMembers.some(
+            (member) =>
+              member.person_id === selected.person_id &&
+              member.team_id === selected.team_id
+          )
+      )
+    );
   };
 
   return (
@@ -378,14 +443,16 @@ const ViewSurvey: React.FC = () => {
                           }}
                           disabled={isReadOnly}
                         />
-                        <Label htmlFor={`question-${question.id}`}>{question.question}</Label>
+                        <Label htmlFor={`question-${question.id}`}>
+                          {question.question} {question.enabled ? "" : "{{ DISABLED }}"}
+                        </Label>
                       </div>
                     ))
                   }
                 </div>
                 <div className="flex space-x-2 border-t border-gray-200 pt-4">
-                  <Button onClick={() => handleSelectAll(category.category_id)}>Select All</Button>
-                  <Button onClick={() => handleDeselectAll(category.category_id)}>Deselect All</Button>
+                  <Button onClick={() => handleSelectAll(category.category_id)} disabled={isReadOnly}>Select All</Button>
+                  <Button onClick={() => handleDeselectAll(category.category_id)} disabled={isReadOnly}>Deselect All</Button>
                 </div>
               </TabsContent>
             ))}
@@ -422,43 +489,56 @@ const ViewSurvey: React.FC = () => {
                     </TableHeader>
                     <TableBody className="text-left">
                       {members
-                        .filter(member => member.team_id === team.id)
-                        .map(member => (
-                          <TableRow key={member.person_id} className={team.id % 2 === 0 ? "bg-muted/50" : ""}>
+                        .filter((member) => member.team_id === team.id)
+                        .map((member) => (
+                          <TableRow
+                            key={member.person_id}
+                            className={team.id % 2 === 0 ? "bg-muted/50" : ""}
+                          >
                             <TableCell>
                               <Checkbox
                                 id={`member-${member.person_id}`}
-                                checked={selectedMembers.includes(member.person_id)}
+                                checked={selectedMembers.some(
+                                  (selectedMember) =>
+                                    selectedMember.person_id === member.person_id &&
+                                    selectedMember.team_id === member.team_id
+                                )}
                                 onCheckedChange={(checked) => {
-                                  setSelectedMembers(prev =>
+                                  setSelectedMembers((prev) =>
                                     checked
-                                      ? [...prev, member.person_id]
-                                      : prev.filter(id => id !== member.person_id)
+                                      ? [
+                                        ...prev,
+                                        { person_id: member.person_id, team_id: member.team_id },
+                                      ]
+                                      : prev.filter(
+                                        (selectedMember) =>
+                                          !(
+                                            selectedMember.person_id === member.person_id &&
+                                            selectedMember.team_id === member.team_id
+                                          )
+                                      )
                                   );
                                 }}
                                 disabled={isReadOnly}
                               />
                             </TableCell>
                             <TableCell>
-                              {people.find(person => person.id === member.person_id)?.name}
+                              {people.find((person) => person.id === member.person_id)?.name}
                             </TableCell>
                             <TableCell>
-                              {people.find(person => person.id === member.person_id)?.email}
+                              {people.find((person) => person.id === member.person_id)?.email}
                             </TableCell>
-                            <TableCell>
-                              {member.role}
-                            </TableCell>
-                            <TableCell>
-                              {team.team_name}
-                            </TableCell>
+                            <TableCell>{member.role}</TableCell>
+                            <TableCell>{team.team_name}</TableCell>
                           </TableRow>
                         ))}
                     </TableBody>
+
                   </Table>
                 </div>
                 <div className="flex space-x-2 border-t border-gray-200 pt-4">
-                  <Button onClick={() => handleSelectAllMembers(team.id)}>Select All</Button>
-                  <Button onClick={() => handleDeselectAllMembers(team.id)}>Deselect All</Button>
+                  <Button onClick={() => handleSelectAllMembers(team.id)} disabled={isReadOnly}>Select All</Button>
+                  <Button onClick={() => handleDeselectAllMembers(team.id)} disabled={isReadOnly}>Deselect All</Button>
                 </div>
               </TabsContent>
 
@@ -470,7 +550,7 @@ const ViewSurvey: React.FC = () => {
           <Button onClick={() => navigate("/surveys")} variant="outline">
             Cancel
           </Button>
-          <Button onClick={handleSaveSurvey}>Save Survey</Button>
+          <Button onClick={handleSaveSurvey} disabled={endDateDisabled}>Save Survey</Button>
         </div>
       </div>
     </div>
