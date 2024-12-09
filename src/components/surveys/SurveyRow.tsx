@@ -17,7 +17,7 @@ const SurveyRow: React.FC<SurveyRowProps> = ({ survey }) => {
   return (
     <TableRow 
       key={survey.id}
-      onClick={() => navigate(`/edit-survey/${encodeURIComponent(survey.id)}`)} // Navegar a la página de edición
+      onClick={() => navigate(`/view-survey/${encodeURIComponent(survey.id)}`)} // Navegar a la página de edición
       className="cursor-pointer hover:bg-gray-100" // Cambiar el fondo al pasar el mouse
     >
       <TableCell>
