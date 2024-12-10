@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils.ts";
 import { CalendarIcon } from 'lucide-react';
+import { SurveyDetailsForm } from "@/components/viewsurvey/SurveyForm"
 
 interface Category {
   category_id: string;
@@ -107,7 +108,7 @@ const ViewSurvey: React.FC = () => {
         setEndDate(data.survey.date_end ? new Date(data.survey.date_end) : undefined);
 
         // Questions
-        fetch(`${apiUrl}/api/questions`)
+        fetch(`${apiUrl}/api/questions/all`)
           .then((response) => {
             if (!response.ok) throw new Error("Failed to fetch questions");
             const resp = response.json();
@@ -247,7 +248,7 @@ const ViewSurvey: React.FC = () => {
           )
       )
       .map((team) => team.team_name);
-
+  
     const body = {
       name: survey?.survey_name,
       date_start: startDate ? format(startDate, "yyyy-MM-dd") : null,
@@ -258,6 +259,8 @@ const ViewSurvey: React.FC = () => {
       members: selectedMembers,
     };
 
+    console.log('Body:',body);
+  
     try {
       const response = await fetch(`${apiUrl}/api/survey/${survey_id}`, {
         method: "PUT",
@@ -266,11 +269,25 @@ const ViewSurvey: React.FC = () => {
         },
         body: JSON.stringify(body),
       });
-
+  
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
-
+  
+      const updatedSurvey = await response.json();
+      
+      // Update the local state to reflect changes
+      setSurvey({
+        ...survey,
+        survey_name: updatedSurvey.survey_name,
+        description: updatedSurvey.description,
+        date_start: updatedSurvey.date_start,
+        date_end: updatedSurvey.date_end,
+        survey_id: updatedSurvey.survey_id || '',
+      });
+  
+      setParticipants(updatedSurvey.members);
+  
       alert("Survey updated successfully!");
       navigate("/surveys");
     } catch (error) {
@@ -278,6 +295,7 @@ const ViewSurvey: React.FC = () => {
       alert("Failed to update survey. Please try again.");
     }
   };
+  
 
   const handleSelectAll = (categoryId: string) => {
     const categoryQuestions = questions.filter(q => q.category_id === categoryId);
@@ -304,10 +322,22 @@ const ViewSurvey: React.FC = () => {
       );
       return [...prev, ...newMembers];
     });
+
+    setParticipants((prev) => {
+      const existingSet = new Set(prev.map((p) => `${p.participant_id}-${p.team_id}`));
+      const newParticipants = teamMembers.filter(
+        (m) => !existingSet.has(`${m.person_id}-${m.team_id}`)
+      );
+      return [...prev, ...newParticipants.map((m) => ({
+        participant_id: m.person_id,
+        team_id: m.team_id,
+      }))];
+    });
   };
 
   const handleDeselectAllMembers = (teamId: number) => {
     const teamMembers = members.filter((member) => member.team_id === teamId);
+
     setSelectedMembers((prev) =>
       prev.filter(
         (selected) =>
@@ -318,7 +348,19 @@ const ViewSurvey: React.FC = () => {
           )
       )
     );
+
+    setParticipants((prev) =>
+      prev.filter(
+        (participant) =>
+          !teamMembers.some(
+            (member) =>
+              member.person_id === participant.participant_id &&
+              member.team_id === participant.team_id
+          )
+      )
+    );
   };
+
 
   return (
     <div className="container mx-auto p-6">
@@ -505,7 +547,7 @@ const ViewSurvey: React.FC = () => {
                                 )}
                                 onCheckedChange={(checked) => {
                                   setSelectedMembers((prev) =>
-                                    checked
+                                    !!checked
                                       ? [
                                         ...prev,
                                         { person_id: member.person_id, team_id: member.team_id },
@@ -518,9 +560,27 @@ const ViewSurvey: React.FC = () => {
                                           )
                                       )
                                   );
+
+                                  if (!!checked) {
+                                    setParticipants((prev) => [
+                                      ...prev,
+                                      { participant_id: member.person_id, team_id: member.team_id },
+                                    ]);
+                                  } else {
+                                    setParticipants((prev) =>
+                                      prev.filter(
+                                        (participant) =>
+                                          !(
+                                            participant.participant_id === member.person_id &&
+                                            participant.team_id === member.team_id
+                                          )
+                                      )
+                                    );
+                                  }
                                 }}
                                 disabled={isReadOnly}
                               />
+
 
                             </TableCell>
                             <TableCell>

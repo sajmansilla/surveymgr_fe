@@ -43,20 +43,20 @@ export function SurveyDetailsForm({ surveyData }: { surveyData: SurveyData }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
-        {/* Nombre */}
+        {/* Name */}
         <Label htmlFor="name">Name</Label>
         <Input id="name" value={surveyData.surveyName} disabled />
 
-        {/* Fecha de inicio */}
+        {/* Start date */}
         <Label htmlFor="start-date">Start Date</Label>
         <DatePicker selectedDate={startDate} onChange={setStartDate} />
 
-        {/* Fecha de fin */}
+        {/* End date */}
         <Label htmlFor="end-date">End Date</Label>
         <DatePicker selectedDate={endDate} onChange={setEndDate} />
       </div>
 
-      {/* Descripción */}
+      {/* Description */}
       <Label htmlFor="description">Description</Label>
       <Input
         id="description"

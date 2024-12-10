@@ -62,6 +62,7 @@ function CreateSurvey() {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<number | undefined>(undefined);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -137,26 +138,27 @@ function CreateSurvey() {
   };
 
   const handleSaveDraft = async () => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app';
+    const apiUrl = import.meta.env.VITE_API_URL;
 
-    // Prepare the list of team names with selected members
-    const teamNamesWithSelectedMembers = teams
-      .filter(team => {
-        // Get all selected members for this team
-        const teamMembers = members.filter(member => member.team_id === team.id);
-        // Check if any member of the team is selected
-        return teamMembers.some(member => selectedMembers.includes(member.person_id));
-      })
-      .map(team => team.team_name); // Map to just the team names
+    // Prepare the list of participants with their respective teams
+    const participantsWithTeams = members
+      .filter(member => selectedMembers.includes(member.person_id)) // Only include selected members
+      .map(member => ({
+        person_id: member.person_id,
+        team_id: member.team_id,
+      }));
 
     const body = {
       name: surveyName,
       date_start: startDate ? format(startDate, "yyyy-MM-dd") : null,
       date_end: endDate ? format(endDate, "yyyy-MM-dd") : null,
-      teams: teamNamesWithSelectedMembers, // Only send an array of team names
+      participants: participantsWithTeams, // Send participant and team pair data
       created_by: 'Default User', // Hardcoded for now
       description: description,
+      questions: selectedQuestions
     };
+
+    console.log('Body:', body);
 
     try {
       const response = await fetch(`${apiUrl}/api/survey`, {
@@ -179,7 +181,8 @@ function CreateSurvey() {
       console.error('Failed to save survey draft:', error);
       alert('Failed to save survey draft. Please try again.');
     }
-  };
+   };
+
 
   return (
     <div className="container mx-auto p-6">
