@@ -18,7 +18,7 @@ const SurveyFilters: React.FC<SurveyFiltersProps> = ({ filter, setFilter }) => {
             <SelectItem value="all">All surveys</SelectItem>
             <SelectItem value="active">Active surveys</SelectItem>
             <SelectItem value="completed">Completed surveys</SelectItem>
-            <SelectItem value="draft">Draft surveys</SelectItem>
+            <SelectItem value="future">Future surveys</SelectItem>
           </SelectContent>
         </Select>
       </div>

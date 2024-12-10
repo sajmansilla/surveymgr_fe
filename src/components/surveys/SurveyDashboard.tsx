@@ -12,11 +12,14 @@ const filterSurveys = (surveys: Survey[], filter: string) => {
   const today = new Date();
   switch (filter) {
     case 'active':
-      return surveys.filter(survey => new Date(survey.dateEnd) > today);
+      return surveys.filter(survey => 
+        new Date(survey.dateEnd) > today && 
+        new Date(survey.dateStart) <= today
+      );
     case 'completed':
       return surveys.filter(survey => new Date(survey.dateEnd) <= today);
-    case 'draft':
-      return surveys.filter(survey => !survey.dateEnd);
+    case 'future':
+      return surveys.filter(survey => survey.dateStart && new Date(survey.dateStart) >= today);
     default:
       return surveys;
   }

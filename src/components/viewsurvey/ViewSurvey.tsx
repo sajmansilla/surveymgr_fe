@@ -84,7 +84,7 @@ const ViewSurvey: React.FC = () => {
     categories.length > 0 ? categories[0].category_id : undefined
   );
 
-  const [teamsIncluded, setTeamsIncluded] = useState<any[]>([]);
+  const [participants, setParticipants] = useState<any[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [people, setPeople] = useState<People[]>([]);
@@ -138,7 +138,7 @@ const ViewSurvey: React.FC = () => {
           });
 
         // Included Teams
-        setTeamsIncluded(data.teamsIncluded);
+        setParticipants(data.participants);
 
         // Fetch Team Members to populate tabs.
         fetch(`${apiUrl}/api/teammembers`)
@@ -498,10 +498,10 @@ const ViewSurvey: React.FC = () => {
                             <TableCell>
                               <Checkbox
                                 id={`member-${member.person_id}`}
-                                checked={selectedMembers.some(
-                                  (selectedMember) =>
-                                    selectedMember.person_id === member.person_id &&
-                                    selectedMember.team_id === member.team_id
+                                checked={participants.some(
+                                  (participant) =>
+                                    participant.participant_id === member.person_id &&
+                                    participant.team_id === member.team_id
                                 )}
                                 onCheckedChange={(checked) => {
                                   setSelectedMembers((prev) =>
@@ -521,6 +521,7 @@ const ViewSurvey: React.FC = () => {
                                 }}
                                 disabled={isReadOnly}
                               />
+
                             </TableCell>
                             <TableCell>
                               {people.find((person) => person.id === member.person_id)?.name}
