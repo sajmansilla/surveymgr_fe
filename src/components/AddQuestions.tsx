@@ -9,7 +9,7 @@ interface Question {
   question: string;
   category_id: number;
   type: 'multiple_choice' | 'free_text' | 'option';
-  calc_method: string;
+  calc_method: 'AVG' | 'Aggregate';
   enabled: boolean;
 }
 
@@ -20,7 +20,7 @@ export default function QuestionForm() {
       question: '',
       category_id: 0,
       type: 'multiple_choice',
-      calc_method: '',
+      calc_method: 'Aggregate',
       enabled: true,
     },
   ]);
@@ -58,7 +58,7 @@ export default function QuestionForm() {
         question: '',
         category_id: 0,
         type: 'multiple_choice',
-        calc_method: '',
+        calc_method: 'Aggregate',
         enabled: true,
       },
     ]);
@@ -94,7 +94,7 @@ export default function QuestionForm() {
           question: '',
           category_id: 0,
           type: 'multiple_choice',
-          calc_method: '',
+          calc_method: 'Aggregate',
           enabled: true,
         },
       ]);

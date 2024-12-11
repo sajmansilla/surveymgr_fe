@@ -33,7 +33,7 @@ const SurveyDashboard: React.FC = () => {
 
   // Fetch data from API
   const fetchSurveyData = useCallback(async () => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app';
+    const apiUrl = import.meta.env.VITE_API_URL;
     try {
       const response = await fetch(`${apiUrl}/api/survey-dashboard`);
       const data = await response.json();
