@@ -5,8 +5,8 @@ const categories = [
   { name: "Teams", href: "/teams", icon: "/joint-account-on-dark.svg" },
   { name: "Assignments", href: "/assignments", icon: "/anouncement-on-dark.svg" },
   { name: "Surveys", href: "/surveys", icon: "/feedback-on-dark.svg" },
-  { name: "Categories", href: "/categories", icon: "/education-on-dark.svg" },
-  { name: "Questions", href: "/questions", icon: "/survey-on-dark.svg" },
+  { name: "Categories&Questions", href: "/categories", icon: "/education-on-dark.svg" },
+  { name: "Reports", href: "/reports", icon: "/survey-on-dark.svg" },
 ];
 
 export default function CategoriesGrid() {
