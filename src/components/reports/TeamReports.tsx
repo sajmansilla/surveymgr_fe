@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.tsx"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx"
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, ResponsiveContainer, AreaChart, Area } from 'recharts'
 
 const marketVolatilityData = [
@@ -46,7 +46,8 @@ const operationalIncidentsData = [
   { quarter: 'Q1', value: 3 }
 ]
 
-export default function Component() {
+const TeamReports: React.FC = () => {
+ 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       <div className="space-y-2">
@@ -195,4 +196,6 @@ export default function Component() {
       </div>
     </div>
   )
-}
+} 
+export default TeamReports;
+ 
