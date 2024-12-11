@@ -34,9 +34,10 @@ export default function SurveyPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL;
     const fetchSurveyData = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/api/surveyedit/${survey_id}`);
+        const response = await fetch(`${apiUrl}/api/surveyedit/${survey_id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch survey data');
         }
@@ -66,13 +67,14 @@ export default function SurveyPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    const apiUrl = import.meta.env.VITE_API_URL;
     e.preventDefault();
     if (!selectedTeam || !email) {
       setError('Please select a team and enter your email.');
       return;
     }
     try {
-      const response = await fetch('http://localhost:3001/api/responses', {
+      const response = await fetch(`${apiUrl}/api/responses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
