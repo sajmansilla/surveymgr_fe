@@ -62,7 +62,7 @@ function CreateSurvey() {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<number | undefined>(undefined);
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -181,12 +181,15 @@ function CreateSurvey() {
       console.error('Failed to save survey draft:', error);
       alert('Failed to save survey draft. Please try again.');
     }
-   };
+  };
 
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Create New Survey</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold">Create New Survey</h1>
+      </div>
+
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
           {/* Name field */}
@@ -307,15 +310,13 @@ function CreateSurvey() {
             </TabsContent>
           ))}
         </Tabs>
-      </div>
 
-      <div className="container mx-auto p-6">
         {/* Existing Teams and Members Tabs */}
         <Tabs
           value={selectedTeam !== undefined ? String(selectedTeam) : ""}
           onValueChange={(value) => setSelectedTeam(value ? parseInt(value) : undefined)}
         >
-          <TabsList className="flex flex-wrap space-x-4 justify-start">
+          <TabsList className="flex flex-wrap space-x-4 justify-start overflow-x-auto ">
             {teams.map(team => (
               <TabsTrigger key={team.id} value={String(team.id)}>
                 {team.team_name}
@@ -388,10 +389,9 @@ function CreateSurvey() {
           ))}
         </Tabs>
 
-      </div>
-
-      <div className="flex justify-end space-x-4">
-        <Button onClick={handleSaveDraft}>Save Survey</Button>
+        <div className="flex justify-end space-x-4">
+          <Button onClick={handleSaveDraft}>Save Survey</Button>
+        </div>
       </div>
     </div>
   );

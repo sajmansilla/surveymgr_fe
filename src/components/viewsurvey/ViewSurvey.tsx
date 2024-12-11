@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils.ts";
 import { CalendarIcon } from 'lucide-react';
-import { SurveyDetailsForm } from "@/components/viewsurvey/SurveyForm"
+import QuestionsComponent from "./QuestionsComponent.tsx";
+import TeamsAndMembersTabs from "./TeamsAndMembersTabs.tsx";
 
 interface Category {
   category_id: string;
@@ -107,7 +108,7 @@ const ViewSurvey: React.FC = () => {
         setStartDate(data.survey.date_start ? new Date(data.survey.date_start) : undefined);
         setEndDate(data.survey.date_end ? new Date(data.survey.date_end) : undefined);
 
-        // Questions
+        // Fetch all Questions
         fetch(`${apiUrl}/api/questions/all`)
           .then((response) => {
             if (!response.ok) throw new Error("Failed to fetch questions");
@@ -121,6 +122,18 @@ const ViewSurvey: React.FC = () => {
 
         // Selected Questions
         setSelectedQuestions(data.questions.map((q: Question) => q.id));
+
+        // Filter Questions
+        const filteredQuestions = questions.filter((question) => {
+          // Verify if the question is in selectedQuestions
+          const isSelected = selectedQuestions.includes(question.id);
+
+          // Keep the question if it's enabled or it was included in the survey before
+          return isSelected || question.enabled;
+        });
+
+        // Update Questions with filtered questions
+        setQuestions(filteredQuestions);
 
         // Fetch categories to populate tabs.
         fetch(`${apiUrl}/api/categories`)
@@ -248,7 +261,7 @@ const ViewSurvey: React.FC = () => {
           )
       )
       .map((team) => team.team_name);
-  
+
     const body = {
       name: survey?.survey_name,
       date_start: startDate ? format(startDate, "yyyy-MM-dd") : null,
@@ -259,8 +272,8 @@ const ViewSurvey: React.FC = () => {
       members: selectedMembers,
     };
 
-    console.log('Body:',body);
-  
+    console.log('Body:', body);
+
     try {
       const response = await fetch(`${apiUrl}/api/survey/${survey_id}`, {
         method: "PUT",
@@ -269,13 +282,13 @@ const ViewSurvey: React.FC = () => {
         },
         body: JSON.stringify(body),
       });
-  
+
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
-  
+
       const updatedSurvey = await response.json();
-      
+
       // Update the local state to reflect changes
       setSurvey({
         ...survey,
@@ -285,9 +298,9 @@ const ViewSurvey: React.FC = () => {
         date_end: updatedSurvey.date_end,
         survey_id: updatedSurvey.survey_id || '',
       });
-  
+
       setParticipants(updatedSurvey.members);
-  
+
       alert("Survey updated successfully!");
       navigate("/surveys");
     } catch (error) {
@@ -295,12 +308,19 @@ const ViewSurvey: React.FC = () => {
       alert("Failed to update survey. Please try again.");
     }
   };
-  
+
 
   const handleSelectAll = (categoryId: string) => {
-    const categoryQuestions = questions.filter(q => q.category_id === categoryId);
-    setSelectedQuestions(prev => [...new Set([...prev, ...categoryQuestions.map(q => q.id)])]);
+    const categoryQuestions = questions.filter(
+      (q) =>
+        q.category_id === categoryId &&
+        (q.enabled || selectedQuestions.includes(q.id)) // Solo incluye preguntas visibles
+    );
+    setSelectedQuestions((prev) => [
+      ...new Set([...prev, ...categoryQuestions.map((q) => q.id)]),
+    ]);
   };
+  
 
   const handleDeselectAll = (categoryId: string) => {
     const categoryQuestions = questions.filter(q => q.category_id === categoryId);
@@ -375,7 +395,7 @@ const ViewSurvey: React.FC = () => {
         <div className="flex items-center space-x-4">
           {/* Name field */}
           <div className="flex items-center space-x-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name" className="whitespace-nowrap">Name</Label>
             <Input
               id="name"
               value={surveyName}
@@ -453,57 +473,19 @@ const ViewSurvey: React.FC = () => {
         </div>
 
         {/* Categories and Questions Tabs */}
-        <div className="container mx-auto p-6">
-          <Tabs
-            value={selectedCategory !== undefined ? selectedCategory : ""}
-            onValueChange={
-              (value) => setSelectedCategory(value ? value : undefined)
-            }>
-            <TabsList className="flex flex-wrap space-x-4 justify-start">
-              {categories.map(category => (
-                <TabsTrigger key={category.category_id} value={category.category_id}>
-                  {category.category_name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            {categories.map(category => (
-              <TabsContent key={category.category_id} value={category.category_id}>
-                <div className="h-[300px] overflow-y-auto mb-4 border border-gray-300 rounded-lg p-4 shadow-sm">
-                  {questions
-                    .filter(question => question.category_id === category.category_id)
-                    .map(question => (
-                      <div key={question.id} className="flex items-center space-x-2 mb-2">
-                        <Checkbox
-                          id={`question-${question.id}`}
-                          checked={selectedQuestions.includes(question.id)}
-                          onCheckedChange={(checked) => {
-                            setSelectedQuestions(prev =>
-                              checked
-                                ? [...prev, question.id]
-                                : prev.filter(id => id !== question.id)
-                            )
-                          }}
-                          disabled={isReadOnly}
-                        />
-                        <Label htmlFor={`question-${question.id}`}>
-                          {question.question} {question.enabled ? "" : "{{ DISABLED }}"}
-                        </Label>
-                      </div>
-                    ))
-                  }
-                </div>
-                <div className="flex space-x-2 border-t border-gray-200 pt-4">
-                  <Button onClick={() => handleSelectAll(category.category_id)} disabled={isReadOnly}>Select All</Button>
-                  <Button onClick={() => handleDeselectAll(category.category_id)} disabled={isReadOnly}>Deselect All</Button>
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-
+          <QuestionsComponent
+            categories={categories}
+            questions={questions}
+            selectedQuestions={selectedQuestions}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            handleSelectAll={handleSelectAll}
+            handleDeselectAll={handleDeselectAll}
+            setSelectedQuestions={setSelectedQuestions}
+            isReadOnly={isReadOnly}
+          />
 
         {/* Existing Teams and Members Tabs */}
-        <div className="team-container mx-auto p-6">
           <Tabs
             value={selectedTeam !== undefined ? String(selectedTeam) : ""}
             onValueChange={
@@ -605,7 +587,6 @@ const ViewSurvey: React.FC = () => {
 
             ))}
           </Tabs>
-        </div>
 
         <div className="flex justify-end space-x-4">
           <Button onClick={() => navigate("/surveys")} variant="outline">
