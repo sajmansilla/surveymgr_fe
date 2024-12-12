@@ -182,12 +182,13 @@ export default function ReportsDashboard() {
     }
   ];
 /// define the categoriesTrend //
-  const categoriesTrend = [
-    { month: 'Jan', '2021': 2.5, '2022': 2.8, '2023': 3.0 },
-    { month: 'Feb', '2021': 2.6, '2022': 2.9, '2023': 3.1 },
-    { month: 'Mar', '2021': 2.7, '2022': 3.0, '2023': 3.2 },
-    // Add more months...
-  ];
+const categoriesTrend = [
+  { survey: 'Q1 Survey', Trust: 2.5, Focus: 2.8, Results: 3.0 },
+  { survey: 'Q2 Survey', Trust: 3.0, Focus: 2.9, Results: 3.1 },
+  { survey: 'Q3 Survey', Trust: 2.7, Focus: 3.0, Results: 3.2 },
+  { survey: 'Q4 Survey', Trust: 3.2, Focus: 3.1, Results: 3.5 },
+];
+
   
 
   return (
@@ -417,62 +418,16 @@ export default function ReportsDashboard() {
   <CardHeader>
     <CardTitle>Categories Trend</CardTitle>
   </CardHeader>
-  <CardContent className="flex justify-center items-center h-full">
+  <CardContent className="flex justify-center items-center">
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={categoriesTrend}>
-        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-        <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip />
-        <Legend
-          verticalAlign="top"
-          height={36}
-          content={({ payload }) => (
-            <div style={{ display: 'flex', justifyContent: 'center', fontSize: '12px', color: '#555' }}>
-              {payload.map((entry, index) => (
-                <span
-                  key={`item-${index}`}
-                  style={{
-                    marginRight: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 10,
-                      height: 10,
-                      backgroundColor: entry.color,
-                      display: 'inline-block',
-                      marginRight: 5,
-                    }}
-                  />
-                  {entry.value}
-                </span>
-              ))}
-            </div>
-          )}
-        />
-        <Line
-          type="monotone"
-          dataKey="2021"
-          stroke="#2196F3"
-          strokeWidth={2}
-          dot={{ fill: '#2196F3', r: 4 }}
-        />
-        <Line
-          type="monotone"
-          dataKey="2022"
-          stroke="#FF5722"
-          strokeWidth={2}
-          dot={{ fill: '#FF5722', r: 4 }}
-        />
-        <Line
-          type="monotone"
-          dataKey="2023"
-          stroke="#4CAF50"
-          strokeWidth={2}
-          dot={{ fill: '#4CAF50', r: 4 }}
-        />
+        <XAxis dataKey="survey" tick={{ fontSize: 12 }} />
+        <YAxis tick={{ fontSize: 12 }} domain={[0, 5]} />
+        <Tooltip contentStyle={{ fontSize: '12px' }} />
+        <Legend wrapperStyle={{ fontSize: '12px' }} />
+        <Line type="monotone" dataKey="Trust" stroke="#4CAF50" strokeWidth={2} dot={{ r: 3 }} />
+        <Line type="monotone" dataKey="Focus" stroke="#2196F3" strokeWidth={2} dot={{ r: 3 }} />
+        <Line type="monotone" dataKey="Results" stroke="#FF9800" strokeWidth={2} dot={{ r: 3 }} />
       </LineChart>
     </ResponsiveContainer>
   </CardContent>
