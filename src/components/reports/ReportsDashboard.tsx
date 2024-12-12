@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Bold } from "lucide-react";
 
 // Define the type for a survey
 interface Survey {
@@ -150,7 +151,7 @@ export default function ReportsDashboard() {
   const uniqueTeamIds = currentSurvey ? Array.from(new Set(currentSurvey.teamIds)) : [];
   const adjustedTeam = selectedTeam === "0" ? uniqueTeamIds[0] : selectedTeam;
   const selectedTeamIndex = uniqueTeamIds.indexOf(adjustedTeam);
-  const selectedTeamName = adjustedTeam === "0" ? "Overall" : uniqueTeamNames[selectedTeamIndex];
+  const selectedTeamName = selectedTeam === "0" ? " " : uniqueTeamNames[selectedTeamIndex];
 
   // Handle bar click to select category
   const handleBarClick = (data: CategoryScore) => {
@@ -167,26 +168,21 @@ export default function ReportsDashboard() {
 
   // Prepare survey overview data
   const surveyOverview = [
-    { name: 'Response Rate', value: currentSurveyTeamResponseRate, color: '#2196F3' },
+   { name: selectedTeam > 0 ? 'Response Rate' : 'No Response Rate', value: selectedTeam > 0? currentSurveyTeamResponseRate : 0, color: '#2196F3' },
     { 
-      name: topScoreCategory.length > 0 ? topScoreCategory[0].category : 'No Top Score', 
-      value: topScoreCategory.length > 0 ? topScoreCategory[0].score : 0, 
+      
+      name: topScoreCategory.length > 0 && selectedTeam > 0 ? topScoreCategory[0].category : 'No Top Score', 
+      value: topScoreCategory.length  > 0 && selectedTeam > 0 ? topScoreCategory[0].score : 0, 
       color: '#4CAF50' 
     },
     { 
-      name: lowScoreCategory.length > 0 ? lowScoreCategory[0].category : 'No Low Score', 
-      value: lowScoreCategory.length > 0 ? lowScoreCategory[0].score : 0, 
+      name: lowScoreCategory.length > 0 && selectedTeam > 0 ? lowScoreCategory[0].category : 'No Low Score', 
+      value: lowScoreCategory.length > 0 && selectedTeam > 0 ? lowScoreCategory[0].score : 0, 
       color: '#FF7043' 
     }
   ];
 
-  // Prepare credit rating data
-  const creditRatingData = [
-    { name: 'AAA', value: 30, color: '#4CAF50' },
-    { name: 'AA', value: 25, color: '#2196F3' },
-    { name: 'A', value: 20, color: '#9C27B0' },
-    { name: 'BBB', value: 25, color: '#FF9800' }
-  ];
+  
 
   return (
     <div className="min-h-screen bg-white">
@@ -199,8 +195,9 @@ export default function ReportsDashboard() {
 
       <div className="flex min-h-[calc(100vh-112px)]">
         {/* Sidebar */}
-        <div className="w-64 border-r bg-white p-6">
-          <h2 className="text-2xl font-semibold mb-6">Survey List</h2>
+        <div className="w-64 border-r bg-white p-6">            
+
+          <div className="text-xl font-semibold mb-4">Survey List</div>
           <div className="space-y-2">
             {surveys.length === 0 ? (
               <div>No surveys available</div>
@@ -297,98 +294,103 @@ export default function ReportsDashboard() {
             <div className="grid md:grid-cols-2 gap-6">
               {/* Team Scores Card */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Team Scores</CardTitle>
-                </CardHeader>
+  <CardHeader>
+    <CardTitle>Team Scores</CardTitle>
+  </CardHeader>
 
-                <CardContent>
-                  {selectedTeam === "0" ? (
-                    <div className="text-center text-gray-600 text-sm">
-                      No team selected. Please select a team to view the scores.
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart 
-                        data={categoryScoreData} 
-                        layout="vertical"
-                        margin={{ left: 30 }}
-                      >
-                        <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
-                        <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
-                        <Tooltip contentStyle={{ fontSize: '12px' }} />
-                        <ReferenceLine x={2.75} stroke="red" strokeDasharray="3 3" />
-                        <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
-                        <Bar 
-                          dataKey="score" 
-                          name="Score"
-                          onClick={(data) => handleBarClick(data.payload)} // Add click handler
-                          shape={(props) => {
-                            const { x, y, width, height } = props;
-                            const barColor = 
-                              props.payload.adviceColor === 'green' ? '#4CAF50' : 
-                              props.payload.adviceColor === 'red' ? '#FF5722' : 
-                              props.payload.adviceColor === 'yellow' ? '#FF9800' : 
-                              '#FF9800'; // Default color
-                            return <rect x={x} y={y} width={width} height={height} fill={barColor} />;
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
+  <CardContent>
+    {selectedTeam === "0" ? (
+      <div className="text-center text-gray-600 text-sm">
+        No team selected. Please select a team to view the scores.
+      </div>
+    ) : (
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart 
+          data={categoryScoreData} 
+          layout="vertical"
+          margin={{ left: 30 }}
+        >
+          <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
+          <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
+          <Tooltip contentStyle={{ fontSize: '12px' }} />
+          <ReferenceLine x={2.75} stroke="red" strokeDasharray="3 3" />
+          <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
+          <Bar 
+            dataKey="score" 
+            name="Score"
+            onClick={(data) => {
+              setSelectedCategory(data);
+            }}
+            shape={(props) => {
+              const { x, y, width, height } = props;
+              const barColor = 
+                props.payload.adviceColor === 'green' ? '#4CAF50' : 
+                props.payload.adviceColor === 'red' ? '#FF5722' : 
+                props.payload.adviceColor === 'yellow' ? '#FF9800' : 
+                '#FF9800'; // Default color
+              return <rect x={x} y={y} width={width} height={height} fill={barColor} />;
+            }}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    )}
+  </CardContent>
+</Card>
 
-              {/* Conditional Rendering: Category Advice or Credit Rating Distribution */}
-              {selectedCategory ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Category Recomendations</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {selectedCategoryData && (
-                      <div
-                        className={`flex flex-col p-4 rounded-lg shadow-md ${
-                          selectedCategoryData.adviceColor === 'green' ? 'bg-green-100' :
-                          selectedCategoryData.adviceColor === 'red' ? 'bg-red-100' :
-                          selectedCategoryData.adviceColor === 'yellow' ? 'bg-orange-100' :
-                          'bg-gray-50' // Default color
-                        }`}
-                      >
-                        <div className="text-lg font-semibold text-black">
-                          {selectedCategoryData.category}
-                        </div>
-                        <div className="text-sm text-gray-700 mt-2">
-                          {selectedCategoryData.advice}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Credit Rating Distribution</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={creditRatingData}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                        >
-                          {creditRatingData.map((entry, index) => (
-                            <Cell key={index} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              )}
+           {/* Conditional Rendering: Category Recommendations */}
+{selectedTeam === "0" ? (
+  <Card>
+    <CardHeader>
+      <CardTitle>Category Recommendations</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-center text-gray-600 text-sm">
+       No team selected. Please select a team to view the recommendations.
+      </div>
+    </CardContent>
+  </Card>
+) : (
+  <Card>
+    <CardHeader>
+      <CardTitle>Category Recommendations</CardTitle>
+    </CardHeader>
+    <CardContent>
+      {selectedCategory ? (
+        <div
+          className={`flex flex-col p-4 rounded-lg shadow-md ${
+            selectedCategory.adviceColor === 'green' ? 'bg-green-100' :
+            selectedCategory.adviceColor === 'red' ? 'bg-red-100' :
+            selectedCategory.adviceColor === 'yellow' ? 'bg-orange-100' :
+            'bg-gray-50' // Default color
+          }`}
+        >
+         
+           <div style={{ fontSize: '16px', color: 'black', fontWeight: '500', Bold }}>{selectedCategory.category}</div>
+          <div className="text-sm text-gray-700 mt-2"> {selectedCategory.advice}</div>
+        </div>
+      ) : (
+        categoryScoreData.length > 0 && (
+          <div
+            className={`flex flex-col p-4 rounded-lg shadow-md ${
+              categoryScoreData[0].adviceColor === 'green' ? 'bg-green-100' :
+              categoryScoreData[0].adviceColor === 'red' ? 'bg-red-100' :
+              categoryScoreData[0].adviceColor === 'yellow' ? 'bg-orange-100' :
+              'bg-gray-50' // Default color
+            }`}
+          >
+            <div className="text-lg font-semibold text-black">
+              {categoryScoreData[0].category}
+            </div>
+            <div className="text-sm text-gray-700 mt-2">
+              {categoryScoreData[0].advice}
+            </div>
+          </div>
+        )
+      )}
+    </CardContent>
+  </Card>
+)}
+
             </div>
 
             {/* Category Trend  Card */}
