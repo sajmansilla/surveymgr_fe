@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ export default function ReportsDashboard() {
   const [selectedTeam, setSelectedTeam] = useState<string>("0");
 
   const [categoryScoreData, setCategoryScoreData] = useState<{ category: string | number; score: number }[]>([]);
+  console.log('categoryScoreData',categoryScoreData);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -59,7 +61,6 @@ export default function ReportsDashboard() {
 
   // Find the current survey
   const currentSurvey = surveys.find((s) => s.id === currentSurveyId);
-  
   // Call calculateTeamReportData when survey or team changes
   useEffect(() => {
     const calculateReportData = async () => {
@@ -76,7 +77,7 @@ export default function ReportsDashboard() {
             throw new Error(`Error in calculateTeamReportData: ${response.statusText}`);
           }
           const result = await response.json();
-          console.log('ddsdsds') ; console.log(result);
+          console.log('all categories scores for the selected survey') ; console.log(result);
           const newData: { category: string | number; score: number }[] = [];
 
 
@@ -120,12 +121,29 @@ export default function ReportsDashboard() {
   
   const uniqueTeamNames = currentSurvey ? Array.from(new Set(currentSurvey.teamNames)): [];
   const uniqueTeamIds = currentSurvey ? Array.from(new Set(currentSurvey.teamIds)): [];
-  // Sample data for other charts
-  const marketVolatilityData = [
-    { name: 'Low Volatility', value: 40, color: '#FFB74D' },
-    { name: 'Medium Volatility', value: 30, color: '#FF7043' },
-    { name: 'High Volatility', value: 30, color: '#9C27B0' }
-  ];
+  const adjustedTeam = selectedTeam === 0 ? uniqueTeamIds[0] : selectedTeam; // handle the cse when no team is selected yet, set the selection to the first team
+  const selectedTeamIndex = uniqueTeamIds.indexOf(adjustedTeam);
+  const selectedTeamName = adjustedTeam === "0" ? "Overall " : uniqueTeamNames[selectedTeamIndex];
+
+  /*console.log('currentSurvey',currentSurvey);
+  console.log('selectedTeam',selectedTeam);
+  console.log('adjustedTeam',adjustedTeam);
+  console.log('selectedTeamIndex',selectedTeamIndex);
+
+  console.log('selectedTeamName',selectedTeamName);*/
+//////////////////// Survey Overview Pie charts//////////////////////
+
+//const currentSurveyResponseRate = currentSurvey.responseRate;
+const currentSurveyResponseRate = currentSurvey?.responseRate ?? 0;
+
+//console.log('currentSurveyResponseRate:', currentSurveyResponseRate);
+
+const surveyOverview = [
+  { name: 'Response Rate', value: currentSurveyResponseRate, color: '#FFB74D' },
+  { name: 'Trust has Top Score', value: 90, color: '#4CAF50' },
+  { name: 'Lowest Score', value: 30, color: '#FF7043' }
+];
+
 
   const creditRatingData = [
     { name: 'AAA', value: 30, color: '#4CAF50' },
@@ -170,13 +188,12 @@ export default function ReportsDashboard() {
           <div className="flex justify-end mb-8">
             <Select
               onValueChange={(value) => setSelectedTeam(value)}
-              defaultValue="0"
-            >
+              defaultValue="0">
               <SelectTrigger className="w-[180px]">
-                <span className="text-gray-500 mr-2">Teams</span>
+                
                 <SelectValue placeholder="Select a team" />
               </SelectTrigger>
-
+              
               <SelectContent>
                 <SelectItem value="0">Select a team</SelectItem>
                 {uniqueTeamNames.map((teamName, index) => (
@@ -184,61 +201,80 @@ export default function ReportsDashboard() {
                     key={`${currentSurveyId}-${index}`} 
                     value={uniqueTeamIds[index]}
                   >
-                    {teamName}
+                    Team {teamName}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
+     
+          <div>Team {selectedTeamName} Self Assessment Survey Report</div>
           {/* Charts and other content */}
           <div className="space-y-6">
+          <Card>
+  <CardHeader>
+    <CardTitle>Survey Overview</CardTitle> 
+   
+  </CardHeader>
+  <CardContent className="flex justify-around h-[200px]">
+    {surveyOverview.map((data, index) => {
+      const chartData = [
+        { name: data.name, value: data.value },
+        { name: 'Remainder', value: 100 - data.value },
+      ];
+
+      // Determine if this is the first chart
+      const isFirstChart = index === 0;
+
+      // Display either percent or raw value
+      const displayValue = isFirstChart ? `${data.value}%` : `${data.value}`;
+
+      return (
+        <div key={index} className="text-center">
+          <ResponsiveContainer width={100} height={100}>
+            <PieChart>
+              <Pie
+                data={chartData}
+                innerRadius={30}
+                outerRadius={40}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                <Cell fill={data.color} />
+                <Cell fill="#eaeaea" />
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="mt-2">
+            <div className="text-2xl font-semibold">{displayValue}</div>
+            <div className="text-sm text-gray-600">{data.name}</div>
+          </div>
+        </div>
+      );
+    })}
+  </CardContent>
+</Card>
+
+
+
+            <div className="grid md:grid-cols-2 gap-6" >
             <Card>
               <CardHeader>
-                <CardTitle>Market Volatility</CardTitle>
+                <CardTitle>Team Scores</CardTitle>
               </CardHeader>
-              <CardContent className="flex justify-around h-[200px]">
-                {marketVolatilityData.map((data, index) => (
-                  <div key={index} className="text-center">
-                    <ResponsiveContainer width={100} height={100}>
-                      <PieChart>
-                        <Pie
-                          data={[data]}
-                          innerRadius={30}
-                          outerRadius={40}
-                          paddingAngle={5}
-                          dataKey="value"
-                          startAngle={90}
-                          endAngle={-270}
-                        >
-                          <Cell fill={data.color} />
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="mt-2">
-                      <div className="text-2xl font-semibold">{data.value}%</div>
-                      <div className="text-sm text-gray-600">{data.name}</div>
-                    </div>
-                  </div>
-                ))}
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={categoryScoreData} layout="vertical"  margin={{ left:30 }}>
+                    <XAxis type="number" tick={{ fontSize: 12 }}/>
+                    <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
+                    <Tooltip contentStyle={{ fontSize: '12px' }} />
+                    
+                    <Bar dataKey="score" fill="#FF9800" name="Score" />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            <div className="grid md:grid-cols-2 gap-6" >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Team Scores </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={categoryScoreData} layout="vertical" >
-                      <XAxis type="number" />
-                      <YAxis dataKey="category" type="category" />
-                      <Bar dataKey="score" fill="#FF9800" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
 
               <Card>
                 <CardHeader>
