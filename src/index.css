@@ -16,11 +16,11 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
 
-    --card: 0 0% 100%;
+    --card: 240 11% 96%;
     --card-foreground: 222.2 47.4% 11.2%;
 
     --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary-foreground: 214, 43%, 90%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -97,6 +97,15 @@
     margin-right: 1rem;
   }
 
+  .text-primary-foreground {
+    color: var(--primary-foreground);
+  }
+
+  html {
+    font-family: 'Euclid', sans-serif;
+  }
+  
+
 }
 
 @layer base {
@@ -111,15 +120,17 @@
 }
 
 @font-face {
-  font-family: 'Hasklig';
-  src: url('/fonts/Hasklig-Regular.otf') format('opentype');
-  font-weight: normal;
+  font-family: 'Euclid';
+  src: url('/fonts/DKBEuclid-Regular-WebXL.woff2') format('woff2'),
+       url('/fonts/DKBEuclid-Regular-WebXL.woff') format('woff');
+  font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Hasklig';
-  src: url('/fonts/Hasklig-Bold.otf') format('opentype');
-  font-weight: bold;
+  font-family: 'Euclid';
+  src: url('/fonts/DKBEuclid-Bold-WebXL.woff2') format('woff2'),
+       url('/fonts/DKBEuclid-Bold-WebXL.woff') format('woff');
+  font-weight: 700;
   font-style: normal;
 }

@@ -14,8 +14,10 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        hasklig: ['Hasklig', 'sans-serif'],
+        sans: ['Euclid', 'sans-serif'],
+        euklide: ['Euclid', 'sans-serif'],
       },
+
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

@@ -6,7 +6,7 @@ export default function Header() {
         alt="SurveyMGR Logo"
         className="w-auto h-24 logo"
       />
-      <h1 className="text-3xl md:text-5xl tracking-tight font-hasklig font-bold">
+      <h1 className="text-3xl md:text-5xl tracking-tight font-body font-bold">
         {'{'}CoFa ACs survey mngr{'};'}
       </h1>
     </div>
