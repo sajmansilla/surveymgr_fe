@@ -187,6 +187,7 @@ const categoriesTrend = [
   { survey: 'Q2 Survey', Trust: 3.0, Focus: 2.9, Results: 3.1 },
   { survey: 'Q3 Survey', Trust: 2.7, Focus: 3.0, Results: 3.2 },
   { survey: 'Q4 Survey', Trust: 3.2, Focus: 3.1, Results: 3.5 },
+  { survey: 'Q5 Survey', Trust: 3.2, Focus: 3.1, Results: 5 },
 ];
 
   
@@ -425,13 +426,24 @@ const categoriesTrend = [
         <YAxis tick={{ fontSize: 12 }} domain={[0, 5]} />
         <Tooltip contentStyle={{ fontSize: '12px' }} />
         <Legend wrapperStyle={{ fontSize: '12px' }} />
-        <Line type="monotone" dataKey="Trust" stroke="#4CAF50" strokeWidth={2} dot={{ r: 3 }} />
-        <Line type="monotone" dataKey="Focus" stroke="#2196F3" strokeWidth={2} dot={{ r: 3 }} />
-        <Line type="monotone" dataKey="Results" stroke="#FF9800" strokeWidth={2} dot={{ r: 3 }} />
+        {/* Dynamically generate lines for each key in the dataset, excluding 'survey' */}
+        {Object.keys(categoriesTrend[0])
+          .filter((key) => key !== 'survey')
+          .map((key, index) => (
+            <Line
+              key={key}
+              type="monotone"
+              dataKey={key}
+              stroke={['#4CAF50', '#2196F3', '#FF9800', '#E91E63'][index % 4]} // Rotate colors for lines
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+          ))}
       </LineChart>
     </ResponsiveContainer>
   </CardContent>
 </Card>
+
 
 
 
