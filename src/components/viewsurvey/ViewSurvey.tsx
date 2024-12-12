@@ -23,7 +23,8 @@ import {
 import { cn } from "@/lib/utils.ts";
 import { CalendarIcon } from 'lucide-react';
 import QuestionsComponent from "./QuestionsComponent.tsx";
-import TeamsAndMembersTabs from "./TeamsAndMembersTabs.tsx";
+import TeamMembers from "./TeamMembers.tsx";
+
 
 interface Category {
   category_id: string;
@@ -320,7 +321,7 @@ const ViewSurvey: React.FC = () => {
       ...new Set([...prev, ...categoryQuestions.map((q) => q.id)]),
     ]);
   };
-  
+
 
   const handleDeselectAll = (categoryId: string) => {
     const categoryQuestions = questions.filter(q => q.category_id === categoryId);
@@ -473,120 +474,120 @@ const ViewSurvey: React.FC = () => {
         </div>
 
         {/* Categories and Questions Tabs */}
-          <QuestionsComponent
-            categories={categories}
-            questions={questions}
-            selectedQuestions={selectedQuestions}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            handleSelectAll={handleSelectAll}
-            handleDeselectAll={handleDeselectAll}
-            setSelectedQuestions={setSelectedQuestions}
-            isReadOnly={isReadOnly}
-          />
+        <QuestionsComponent
+          categories={categories}
+          questions={questions}
+          selectedQuestions={selectedQuestions}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          handleSelectAll={handleSelectAll}
+          handleDeselectAll={handleDeselectAll}
+          setSelectedQuestions={setSelectedQuestions}
+          isReadOnly={isReadOnly}
+        />
 
         {/* Existing Teams and Members Tabs */}
-          <Tabs
-            value={selectedTeam !== undefined ? String(selectedTeam) : ""}
-            onValueChange={
-              (value) => setSelectedTeam(value ? parseInt(value) : undefined)
-            }>
-            <TabsList className="flex flex-wrap space-x-4 justify-start overflow-x-auto ">
-              {teams.map(team => (
-                <TabsTrigger key={team.id} value={String(team.id)}>
-                  {team.team_name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+        <Tabs
+          value={selectedTeam !== undefined ? String(selectedTeam) : ""}
+          onValueChange={
+            (value) => setSelectedTeam(value ? parseInt(value) : undefined)
+          }>
+          <TabsList className="flex flex-wrap space-x-4 justify-start overflow-x-auto ">
             {teams.map(team => (
-              <TabsContent key={team.id} value={String(team.id)}>
-                <div className="h-[300px] overflow-y-auto mb-4 border border-gray-300 rounded-lg p-4 shadow-sm">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead className="font-semibold">Select</TableHead>
-                        <TableHead className="font-semibold">Name</TableHead>
-                        <TableHead className="font-semibold">Email</TableHead>
-                        <TableHead className="font-semibold">Role</TableHead>
-                        <TableHead className="font-semibold">Team</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="text-left">
-                      {members
-                        .filter((member) => member.team_id === team.id)
-                        .map((member) => (
-                          <TableRow
-                            key={member.person_id}
-                            className={team.id % 2 === 0 ? "bg-muted/50" : ""}
-                          >
-                            <TableCell>
-                              <Checkbox
-                                id={`member-${member.person_id}`}
-                                checked={participants.some(
-                                  (participant) =>
-                                    participant.participant_id === member.person_id &&
-                                    participant.team_id === member.team_id
-                                )}
-                                onCheckedChange={(checked) => {
-                                  setSelectedMembers((prev) =>
-                                    !!checked
-                                      ? [
-                                        ...prev,
-                                        { person_id: member.person_id, team_id: member.team_id },
-                                      ]
-                                      : prev.filter(
-                                        (selectedMember) =>
-                                          !(
-                                            selectedMember.person_id === member.person_id &&
-                                            selectedMember.team_id === member.team_id
-                                          )
-                                      )
-                                  );
-
-                                  if (!!checked) {
-                                    setParticipants((prev) => [
-                                      ...prev,
-                                      { participant_id: member.person_id, team_id: member.team_id },
-                                    ]);
-                                  } else {
-                                    setParticipants((prev) =>
-                                      prev.filter(
-                                        (participant) =>
-                                          !(
-                                            participant.participant_id === member.person_id &&
-                                            participant.team_id === member.team_id
-                                          )
-                                      )
-                                    );
-                                  }
-                                }}
-                                disabled={isReadOnly}
-                              />
-
-
-                            </TableCell>
-                            <TableCell>
-                              {people.find((person) => person.id === member.person_id)?.name}
-                            </TableCell>
-                            <TableCell>
-                              {people.find((person) => person.id === member.person_id)?.email}
-                            </TableCell>
-                            <TableCell>{member.role}</TableCell>
-                            <TableCell>{team.team_name}</TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-
-                  </Table>
-                </div>
-                <div className="flex space-x-2 border-t border-gray-200 pt-4">
-                  <Button onClick={() => handleSelectAllMembers(team.id)} disabled={isReadOnly}>Select All</Button>
-                  <Button onClick={() => handleDeselectAllMembers(team.id)} disabled={isReadOnly}>Deselect All</Button>
-                </div>
-              </TabsContent>
-
+              <TabsTrigger key={team.id} value={String(team.id)}>
+                {team.team_name}
+              </TabsTrigger>
             ))}
-          </Tabs>
+          </TabsList>
+          {teams.map(team => (
+            <TabsContent key={team.id} value={String(team.id)}>
+              <div className="h-[300px] overflow-y-auto mb-4 border border-gray-300 rounded-lg p-4 shadow-sm">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold">Select</TableHead>
+                      <TableHead className="font-semibold">Name</TableHead>
+                      <TableHead className="font-semibold">Email</TableHead>
+                      <TableHead className="font-semibold">Role</TableHead>
+                      <TableHead className="font-semibold">Team</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="text-left">
+                    {members
+                      .filter((member) => member.team_id === team.id)
+                      .map((member) => (
+                        <TableRow
+                          key={member.person_id}
+                          className={team.id % 2 === 0 ? "bg-muted/50" : ""}
+                        >
+                          <TableCell>
+                            <Checkbox
+                              id={`member-${member.person_id}`}
+                              checked={participants.some(
+                                (participant) =>
+                                  participant.participant_id === member.person_id &&
+                                  participant.team_id === member.team_id
+                              )}
+                              onCheckedChange={(checked) => {
+                                setSelectedMembers((prev) =>
+                                  !!checked
+                                    ? [
+                                      ...prev,
+                                      { person_id: member.person_id, team_id: member.team_id },
+                                    ]
+                                    : prev.filter(
+                                      (selectedMember) =>
+                                        !(
+                                          selectedMember.person_id === member.person_id &&
+                                          selectedMember.team_id === member.team_id
+                                        )
+                                    )
+                                );
+
+                                if (!!checked) {
+                                  setParticipants((prev) => [
+                                    ...prev,
+                                    { participant_id: member.person_id, team_id: member.team_id },
+                                  ]);
+                                } else {
+                                  setParticipants((prev) =>
+                                    prev.filter(
+                                      (participant) =>
+                                        !(
+                                          participant.participant_id === member.person_id &&
+                                          participant.team_id === member.team_id
+                                        )
+                                    )
+                                  );
+                                }
+                              }}
+                              disabled={isReadOnly}
+                            />
+
+
+                          </TableCell>
+                          <TableCell>
+                            {people.find((person) => person.id === member.person_id)?.name}
+                          </TableCell>
+                          <TableCell>
+                            {people.find((person) => person.id === member.person_id)?.email}
+                          </TableCell>
+                          <TableCell>{member.role}</TableCell>
+                          <TableCell>{team.team_name}</TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+
+                </Table>
+              </div>
+              <div className="flex space-x-2 border-t border-gray-200 pt-4">
+                <Button onClick={() => handleSelectAllMembers(team.id)} disabled={isReadOnly}>Select All</Button>
+                <Button onClick={() => handleDeselectAllMembers(team.id)} disabled={isReadOnly}>Deselect All</Button>
+              </div>
+            </TabsContent>
+
+          ))}
+        </Tabs>
 
         <div className="flex justify-end space-x-4">
           <Button onClick={() => navigate("/surveys")} variant="outline">

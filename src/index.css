@@ -58,7 +58,7 @@
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 1.2%;
 
-    --secondary: 222.2 47.4% 11.2%;
+    --secondary: 206, 84%, 50%;
     --secondary-foreground: 210 40% 98%;
 
     --destructive: 0 63% 31%;
@@ -101,6 +101,10 @@
     color: var(--primary-foreground);
   }
 
+  .text-secondary-foreground {
+    color: var(--secondary-foreground);
+  }
+
   html {
     font-family: 'Euclid', sans-serif;
   }
@@ -132,5 +136,13 @@
   src: url('/fonts/DKBEuclid-Bold-WebXL.woff2') format('woff2'),
        url('/fonts/DKBEuclid-Bold-WebXL.woff') format('woff');
   font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Euclid';
+  src: url('/fonts/DKBEuclid-Semibold-WebXL.woff2') format('woff2'),
+       url('/fonts/DKBEuclid-Semibold-WebXL.woff') format('woff');
+  font-weight: 550;
   font-style: normal;
 }

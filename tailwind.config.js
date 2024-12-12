@@ -15,7 +15,12 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['Euclid', 'sans-serif'],
-        euklide: ['Euclid', 'sans-serif'],
+        euclid: ['Euclid', 'sans-serif'],
+      },
+      fontWeight: {
+        regular: 400,
+        semibold: 550,
+        bold: 700,
       },
 
       colors: {
