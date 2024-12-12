@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, ReferenceLine } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, ReferenceLine, Label } from 'recharts';
 
 import {
   Select,
@@ -28,15 +28,15 @@ interface Survey {
 export default function ReportsDashboard() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("0");
-
   const [categoryScoreData, setCategoryScoreData] = useState<{ category: string | number; score: number }[]>([]);
-  console.log('categoryScoreData',categoryScoreData);
+  const [lowScoreCategory, setLowScoreCategory] = useState<{ category: string | number; score: number }[]>([]);
+  const [topScoreCategory, setTopScoreCategory] = useState<{ category: string | number; score: number }[]>([]);
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    // Fetch surveys from the API
     const fetchSurveys = async () => {
       try {
         const response = await fetch(`${apiUrl}/api/survey-dashboard`);
@@ -54,14 +54,12 @@ export default function ReportsDashboard() {
     fetchSurveys();
   }, [apiUrl]);
 
-  // Determine current survey ID
   const paramSurveyId = searchParams.get('surveyId');
   const defaultSurveyId = surveys.length > 0 ? surveys[0].id : null;
   const currentSurveyId = paramSurveyId ? Number(paramSurveyId) : defaultSurveyId;
 
-  // Find the current survey
   const currentSurvey = surveys.find((s) => s.id === currentSurveyId);
-  // Call calculateTeamReportData when survey or team changes
+
   useEffect(() => {
     const calculateReportData = async () => {
       if (currentSurveyId) {
@@ -77,31 +75,44 @@ export default function ReportsDashboard() {
             throw new Error(`Error in calculateTeamReportData: ${response.statusText}`);
           }
           const result = await response.json();
-          console.log('all categories scores for the selected survey') ; console.log(result);
           const newData: { category: string | number; score: number }[] = [];
 
+          if (selectedTeam !== '0') {
+            const topScoreCategory: { category: string | number; score: number }[] = [];
+            const lowScoreCategory: { category: string | number; score: number }[] = [];
 
-          //  filter the category score chart based on the selected team id
-          if (selectedTeam != '0') 
-            {
-            // Otherwise,
             for (const team_category_scores of result.category_scores) {
               if (team_category_scores.teamId === selectedTeam) {
                 const scores = team_category_scores.scores.results;
+
                 for (const score of scores) {
+                  if (score.top_score) {
+                    topScoreCategory.push({
+                      category: 'Be Proud of: ' + score.category_name,
+                      score: score.score
+                    });
+                  }
+
+                  if (score.low_score) {
+                    lowScoreCategory.push({
+                      category: 'Keep Eye on: ' + score.category_name,
+                      score: score.score
+                    });
+                  }
+
                   newData.push({
-                    //category: score.category_id,
                     category: score.category_name,
                     score: score.score
                   });
                 }
+
+                setLowScoreCategory(lowScoreCategory);
+                setTopScoreCategory(topScoreCategory);
                 break;
               }
             }
+            setCategoryScoreData(newData);
           }
-
-          setCategoryScoreData(newData);
-          console.log('Category scores updated:', newData);
         } catch (error) {
           console.error('Failed to calculate team report data:', error);
         }
@@ -117,41 +128,33 @@ export default function ReportsDashboard() {
     navigate(`?surveyId=${surveyId}`);
   };
 
-  // Ensure uniqueness of teamNames if needed
-  
-  const uniqueTeamNames = currentSurvey ? Array.from(new Set(currentSurvey.teamNames)): [];
-  const uniqueTeamIds = currentSurvey ? Array.from(new Set(currentSurvey.teamIds)): [];
-  const adjustedTeam = selectedTeam === 0 ? uniqueTeamIds[0] : selectedTeam; // handle the cse when no team is selected yet, set the selection to the first team
+  const uniqueTeamNames = currentSurvey ? Array.from(new Set(currentSurvey.teamNames)) : [];
+  const uniqueTeamIds = currentSurvey ? Array.from(new Set(currentSurvey.teamIds)) : [];
+  const adjustedTeam = selectedTeam === "0" ? uniqueTeamIds[0] : selectedTeam;
   const selectedTeamIndex = uniqueTeamIds.indexOf(adjustedTeam);
-  const selectedTeamName = adjustedTeam === "0" ? "Overall " : uniqueTeamNames[selectedTeamIndex];
+  const selectedTeamName = adjustedTeam === "0" ? "Overall" : uniqueTeamNames[selectedTeamIndex];
 
-  /*console.log('currentSurvey',currentSurvey);
-  console.log('selectedTeam',selectedTeam);
-  console.log('adjustedTeam',adjustedTeam);
-  console.log('selectedTeamIndex',selectedTeamIndex);
+  const currentSurveyResponseRate = currentSurvey?.responseRate ?? 0;
 
-  console.log('selectedTeamName',selectedTeamName);*/
-//////////////////// Survey Overview Pie charts//////////////////////
-
-//const currentSurveyResponseRate = currentSurvey.responseRate;
-const currentSurveyResponseRate = currentSurvey?.responseRate ?? 0;
-
-//console.log('currentSurveyResponseRate:', currentSurveyResponseRate);
-
-const surveyOverview = [
-  { name: 'Response Rate', value: currentSurveyResponseRate, color: '#FFB74D' },
-  { name: 'Trust has Top Score', value: 90, color: '#4CAF50' },
-  { name: 'Lowest Score', value: 30, color: '#FF7043' }
-];
-
-
+  const surveyOverview = [
+    { name: 'Response Rate', value: currentSurveyResponseRate, color: '#FFB74D' },
+    { 
+      name: topScoreCategory.length > 0 ? topScoreCategory[0].category : 'No Top Score', 
+      value: topScoreCategory.length > 0 ? topScoreCategory[0].score : 0, 
+      color: '#4CAF50' 
+    },
+    { 
+      name: lowScoreCategory.length > 0 ? lowScoreCategory[0].category : 'No Low Score', 
+      value: lowScoreCategory.length > 0 ? lowScoreCategory[0].score : 0, 
+      color: '#FF7043' 
+    }
+  ];
   const creditRatingData = [
     { name: 'AAA', value: 30, color: '#4CAF50' },
     { name: 'AA', value: 25, color: '#2196F3' },
     { name: 'A', value: 20, color: '#9C27B0' },
     { name: 'BBB', value: 25, color: '#FF9800' }
   ];
-
   return (
     <div className="min-h-screen bg-white">
       <div className="text-sm text-gray-600 p-2 border-b">
@@ -161,7 +164,6 @@ const surveyOverview = [
       </div>
 
       <div className="flex min-h-[calc(100vh-112px)]">
-        {/* Sidebar */}
         <div className="w-64 border-r bg-white p-6">
           <h2 className="text-2xl font-semibold mb-6">Survey List</h2>
           <div className="space-y-2">
@@ -183,17 +185,14 @@ const surveyOverview = [
           </div>
         </div>
 
-        {/* Main Content Area */}
         <div className="flex-1 p-6">
           <div className="flex justify-end mb-8">
             <Select
               onValueChange={(value) => setSelectedTeam(value)}
               defaultValue="0">
               <SelectTrigger className="w-[180px]">
-                
                 <SelectValue placeholder="Select a team" />
               </SelectTrigger>
-              
               <SelectContent>
                 <SelectItem value="0">Select a team</SelectItem>
                 {uniqueTeamNames.map((teamName, index) => (
@@ -207,83 +206,78 @@ const surveyOverview = [
               </SelectContent>
             </Select>
           </div>
-     
+
           <div>Team {selectedTeamName} Self Assessment Survey Report</div>
-          {/* Charts and other content */}
           <div className="space-y-6">
-          <Card>
-  <CardHeader>
-    <CardTitle>Survey Overview</CardTitle> 
-   
-  </CardHeader>
-  <CardContent className="flex justify-around h-[200px]">
-    {surveyOverview.map((data, index) => {
-      const chartData = [
-        { name: data.name, value: data.value },
-        { name: 'Remainder', value: 100 - data.value },
-      ];
-
-      // Determine if this is the first chart
-      const isFirstChart = index === 0;
-
-      // Display either percent or raw value
-      const displayValue = isFirstChart ? `${data.value}%` : `${data.value}`;
-
-      return (
-        <div key={index} className="text-center">
-          <ResponsiveContainer width={100} height={100}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                innerRadius={30}
-                outerRadius={40}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                <Cell fill={data.color} />
-                <Cell fill="#eaeaea" />
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="mt-2">
-            <div className="text-2xl font-semibold">{displayValue}</div>
-            <div className="text-sm text-gray-600">{data.name}</div>
-          </div>
-        </div>
-      );
-    })}
-  </CardContent>
-</Card>
-
-
-
-            <div className="grid md:grid-cols-2 gap-6" >
             <Card>
               <CardHeader>
-                <CardTitle>Team Scores</CardTitle>
+                <CardTitle>Survey Overview</CardTitle> 
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart 
-                    data={categoryScoreData} 
-                    layout="vertical"
-                    margin={{ left: 30 }}
-                  >
-                    <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
-                    <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
-                    <Tooltip contentStyle={{ fontSize: '12px' }} />
-                    
-                    {/* Add ReferenceLines for thresholds */}
-                    <ReferenceLine x={2.75} stroke="red" strokeDasharray="3 3" />
-                    <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
-                    
-                    <Bar dataKey="score" fill="#FF9800" name="Score" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="flex justify-around h-[200px]">
+                {surveyOverview.map((data, index) => {
+                  const numericDrawValue = index === 0 ? data.value : (data.value / 5) * 100;
+                  const displayValue = index === 0 ? `${data.value}%` : `${data.value}`;
+                  const chartData = [
+                    { name: data.name, value: numericDrawValue },
+                    { name: 'Remainder', value: 100 - numericDrawValue },
+                  ];
+                  return (
+                    <div key={index} className="text-center flex flex-col items-center">
+                      <ResponsiveContainer width={100} height={100}>
+                        <PieChart>
+                          <Pie
+                            data={chartData}
+                            innerRadius={30}
+                            outerRadius={40}
+                            paddingAngle={5}
+                            dataKey="value"
+                          >
+                            <Cell fill={data.color} />
+                            <Cell fill="#eaeaea" />
+                            <Label value={displayValue} position="center" style={{ fontSize: '12px', fontWeight: 'bold' }} />
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="mt-2">
+                        <div className="text-xs text-gray-500">{data.name}</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
 
+            <div className="grid md:grid-cols-2 gap-6">
+              
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Team Scores</CardTitle>
+                  </CardHeader>
 
+                  <CardContent>
+                  {selectedTeam === "0" ? (
+                <div className="text-center text-gray-600 text-sm">
+                  No team selected. Please select a team to view the scores.
+                </div>
+              ) : (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart 
+                        data={categoryScoreData} 
+                        layout="vertical"
+                        margin={{ left: 30 }}
+                      >
+                        <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
+                        <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
+                        <Tooltip contentStyle={{ fontSize: '12px' }} />
+                        <ReferenceLine x={2.75} stroke="red" strokeDasharray="3 3" />
+                        <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
+                        <Bar dataKey="score" fill="#FF9800" name="Score" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              
 
               <Card>
                 <CardHeader>
