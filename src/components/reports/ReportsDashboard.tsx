@@ -28,7 +28,7 @@ interface Survey {
 export default function ReportsDashboard() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("0");
-  const [categoryScoreData, setCategoryScoreData] = useState<{ category: string | number; score: number }[]>([]);
+  const [categoryScoreData, setCategoryScoreData] = useState<{ category: string | number; score: number;advice:string }[]>([]);
   const [lowScoreCategory, setLowScoreCategory] = useState<{ category: string | number; score: number }[]>([]);
   const [topScoreCategory, setTopScoreCategory] = useState<{ category: string | number; score: number }[]>([]);
 
@@ -74,7 +74,7 @@ export default function ReportsDashboard() {
             throw new Error(`Error in calculateTeamReportData: ${response.statusText}`);
           }
           const result = await response.json();
-          const newData: { category: string | number; score: number }[] = [];
+          const newData: { category: string | number; score: number; advice: string;adviceColor: string }[] = [];
 
           if (selectedTeam !== '0') {
             const topScoreCategory: { category: string | number; score: number }[] = [];
@@ -101,16 +101,21 @@ export default function ReportsDashboard() {
 
                   newData.push({
                     category: score.category_name,
-                    score: score.score
+                    score: score.score,
+                    advice:score.advice,
+                    adviceColor:score.adviceColor
+
                   });
                 }
-
                 setLowScoreCategory(lowScoreCategory);
                 setTopScoreCategory(topScoreCategory);
                 break;
               }
             }
+            
             setCategoryScoreData(newData);
+            console.log('newData',newData);
+
           }
         } catch (error) {
           console.error('Failed to calculate team report data:', error);
@@ -302,7 +307,36 @@ export default function ReportsDashboard() {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
-            </div>
+</div>
+<div className="space-y-6">
+  <Card className="w-full">
+    <CardHeader>
+      <CardTitle>Recommendations</CardTitle>
+    </CardHeader>
+    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {categoryScoreData.map((data, index) => (
+        <div
+          key={index}
+          className={`flex flex-col p-4 rounded-lg shadow-md ${
+            data.adviceColor === 'green' ? 'bg-green-100' :
+            data.adviceColor === 'red' ? 'bg-red-100' :
+            data.adviceColor === 'yellow' ? 'bg-yellow-100' :
+            'bg-gray-50' // Default color
+          }`}
+        >
+          <div className="text-lg font-semibold text-black">
+            {data.category}
+          </div>
+          <div className="text-sm text-gray-700 mt-2">
+            {data.advice}
+          </div>
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+</div>
+
+
           </div>
         </div>
       </div>
