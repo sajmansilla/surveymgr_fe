@@ -24,7 +24,7 @@ const SurveyRow: React.FC<SurveyRowProps> = ({ survey }) => {
         <div className="flex items-center gap-3">
           <Link to={`/survey/${encodeURIComponent(survey.id)}`} className="block">
             <div 
-              className="relative w-10 h-10 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold"
+              className="relative w-10 h-10 rounded bg-primary text-primary-foreground flex items-center justify-center font-semibold"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               aria-label={`Go to survey: ${survey.id}`}

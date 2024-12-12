@@ -39,11 +39,11 @@ export default function Header() {
                 to={category.href}
                 className="flex items-center space-x-2"
               >
-                <span className="text-primary-foreground py-2 px-4 rounded hover:text-hover-secondary">{category.name}</span>
+                <span className="text-primary-foreground py-2 px-4 rounded hover:text-secondary">{category.name}</span>
               </Link>
             ))}
             <button
-              className="text-primary-foreground py-2 px-4 rounded hover:text-primary-foreground"
+              className="text-primary-foreground py-2 px-4 rounded hover:text-secondary"
               onClick={toggleAbout}
             >
               About
