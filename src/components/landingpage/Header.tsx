@@ -7,7 +7,7 @@ export default function Header() {
         className="w-auto h-24 logo"
       />
       <h1 className="text-3xl md:text-5xl tracking-tight font-body font-bold">
-        {'{'}CoFa ACs survey mngr{'};'}
+        {'{ '}CoFa ACs survey mngr{' };'}
       </h1>
     </div>
   );
