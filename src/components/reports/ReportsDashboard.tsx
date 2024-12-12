@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom"; // Use react-router-dom for navigation
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import {
@@ -11,42 +11,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 // Define the type for a survey
 interface Survey {
   id: number;
   name: string;
-  teamNames: string[]; // Nested array of team names
+  teamNames: string[];
   description?: string;
   date_start?: string;
   date_end?: string;
   createdAt?: string;
   created_by?: string;
-};
-const marketVolatilityData = [
-  { name: 'Low Volatility', value: 40, color: '#FFB74D' },
-  { name: 'Medium Volatility', value: 30, color: '#FF7043' },
-  { name: 'High Volatility', value: 30, color: '#9C27B0' }
-];
-
-const debtEquityData = [
-  { quarter: 'Q4', value: 8 },
-  { quarter: 'Q3', value: 6 },
-  { quarter: 'Q2', value: 9 },
-  { quarter: 'Q1', value: 4 }
-];
-
-const creditRatingData = [
-  { name: 'AAA', value: 30, color: '#4CAF50' },
-  { name: 'AA', value: 25, color: '#2196F3' },
-  { name: 'A', value: 20, color: '#9C27B0' },
-  { name: 'BBB', value: 25, color: '#FF9800' }
-];
+}
 
 export default function ReportsDashboard() {
-  const [surveys, setSurveys] = useState<Survey[]>([]); // Specify the type of surveys
+  const [surveys, setSurveys] = useState<Survey[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<string>("0");
 
-  const navigate = useNavigate(); // Use navigate from react-router-dom
-  //const [searchParams] = useSearchParams(); // Get search parameters
+  const [categoryScoreData, setCategoryScoreData] = useState<{ category: string | number; score: number }[]>([]);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -58,75 +42,155 @@ export default function ReportsDashboard() {
           throw new Error(`Error fetching surveys: ${response.statusText}`);
         }
         const data = await response.json();
-        setSurveys(data.surveys || []); // Assuming the API returns { surveys: [...] }
+
+        setSurveys(data.surveys || []);
       } catch (error) {
         console.error('Failed to fetch surveys:', error);
       }
     };
 
     fetchSurveys();
-  }, [apiUrl]); // Run once on mount with apiUrl dependency
+  }, [apiUrl]);
 
-  const handleSurveyClick = (surveyId:number) => {
-    // Navigate to the current page with the surveyId query parameter
+  // Determine current survey ID
+  const paramSurveyId = searchParams.get('surveyId');
+  const defaultSurveyId = surveys.length > 0 ? surveys[0].id : null;
+  const currentSurveyId = paramSurveyId ? Number(paramSurveyId) : defaultSurveyId;
+
+  // Find the current survey
+  const currentSurvey = surveys.find((s) => s.id === currentSurveyId);
+  
+  // Call calculateTeamReportData when survey or team changes
+  useEffect(() => {
+    const calculateReportData = async () => {
+      if (currentSurveyId) {
+        try {
+          const response = await fetch(`${apiUrl}/api/reports`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ survey_id: currentSurveyId })
+          });
+          if (!response.ok) {
+            throw new Error(`Error in calculateTeamReportData: ${response.statusText}`);
+          }
+          const result = await response.json();
+
+          const newData: { category: string | number; score: number }[] = [];
+
+
+          //  filter the category score chart based on the selected team id
+          if (selectedTeam != '0') 
+            {
+            // Otherwise,
+            for (const team_category_scores of result.category_scores) {
+              if (team_category_scores.teamId === selectedTeam) {
+                const scores = team_category_scores.scores.results;
+                for (const score of scores) {
+                  newData.push({
+                    category: score.category_id,
+                    score: score.score
+                  });
+                }
+                break;
+              }
+            }
+          }
+
+          setCategoryScoreData(newData);
+          console.log('Category scores updated:', newData);
+        } catch (error) {
+          console.error('Failed to calculate team report data:', error);
+        }
+      }
+    };
+
+    if (currentSurveyId) {
+      calculateReportData();
+    }
+  }, [currentSurveyId, apiUrl, selectedTeam]);
+
+  const handleSurveyClick = (surveyId: number) => {
     navigate(`?surveyId=${surveyId}`);
   };
 
-  function setSelectedTeam(value: string): void {
-    throw new Error("Function not implemented.");
-  }
+  // Ensure uniqueness of teamNames if needed
+  
+  const uniqueTeamNames = currentSurvey ? Array.from(new Set(currentSurvey.teamNames)): [];
+  const uniqueTeamIds = currentSurvey ? Array.from(new Set(currentSurvey.teamIds)): [];
+  // Sample data for other charts
+  const marketVolatilityData = [
+    { name: 'Low Volatility', value: 40, color: '#FFB74D' },
+    { name: 'Medium Volatility', value: 30, color: '#FF7043' },
+    { name: 'High Volatility', value: 30, color: '#9C27B0' }
+  ];
+
+  const creditRatingData = [
+    { name: 'AAA', value: 30, color: '#4CAF50' },
+    { name: 'AA', value: 25, color: '#2196F3' },
+    { name: 'A', value: 20, color: '#9C27B0' },
+    { name: 'BBB', value: 25, color: '#FF9800' }
+  ];
 
   return (
     <div className="min-h-screen bg-white">
       <div className="text-sm text-gray-600 p-2 border-b">
-        <h1 className="text-2xl font-semibold mb-6">Overall Report for Survey XZY</h1>
+        <h1 className="text-2xl font-semibold mb-6">
+          {currentSurvey ? `Overall Report for ${currentSurvey.name}` : 'No Selected Survey'}
+        </h1>
       </div>
 
-      {/* Main Content */}
       <div className="flex min-h-[calc(100vh-112px)]">
         {/* Sidebar */}
         <div className="w-64 border-r bg-white p-6">
           <h2 className="text-2xl font-semibold mb-6">Survey List</h2>
           <div className="space-y-2">
-            {surveys.map((survey) => (
-              <button
-                key={survey.id}
-                onClick={() => handleSurveyClick(survey.id)} // Pass survey ID on click
-                className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-50"
-              >
-                {survey.name}
-              </button>
-            ))}
+            {surveys.length === 0 ? (
+              <div>No surveys available</div>
+            ) : (
+              surveys.map((survey) => (
+                <button
+                  key={survey.id}
+                  onClick={() => handleSurveyClick(survey.id)}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-50 ${
+                    currentSurveyId === survey.id ? 'bg-gray-200' : ''
+                  }`}
+                >
+                  {survey.name}
+                </button>
+              ))
+            )}
           </div>
         </div>
 
         {/* Main Content Area */}
         <div className="flex-1 p-6">
-        <div className="flex justify-end mb-8">
-            <Select 
-              onValueChange={(value) => setSelectedTeam(value)} // Update state on value change
-              defaultValue="Select a team"
+          <div className="flex justify-end mb-8">
+            <Select
+              onValueChange={(value) => setSelectedTeam(value)}
+              defaultValue="0"
             >
               <SelectTrigger className="w-[180px]">
                 <span className="text-gray-500 mr-2">Teams</span>
                 <SelectValue placeholder="Select a team" />
               </SelectTrigger>
-              
+
               <SelectContent>
-              <SelectItem value="all">Overall Report</SelectItem>
-                {surveys.map((survey, index) => (
-                  survey.teamNames.map((teamName, teamIndex) => (
-                    <SelectItem 
-                      key={`${index}-${teamIndex}`} 
-                      value={teamName}
-                    >
-                      {teamName}
-                    </SelectItem>
-                  ))
+                <SelectItem value="0">Select a team</SelectItem>
+                {uniqueTeamNames.map((teamName, index) => (
+                  <SelectItem
+                    key={`${currentSurveyId}-${index}`} 
+                    value={uniqueTeamIds[index]}
+                  >
+                    {teamName}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
+          {/* Charts and other content */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -162,14 +226,14 @@ export default function ReportsDashboard() {
             <div className="grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Debt-to-Equity Ratio</CardTitle>
+                  <CardTitle>Team Scores </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={debtEquityData} layout="vertical">
-                      <XAxis type="number" domain={[0, 12]} />
-                      <YAxis dataKey="quarter" type="category" />
-                      <Bar dataKey="value" fill="#FF9800" />
+                    <BarChart data={categoryScoreData} layout="vertical">
+                      <XAxis type="number" />
+                      <YAxis dataKey="category" type="category" />
+                      <Bar dataKey="score" fill="#FF9800" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
