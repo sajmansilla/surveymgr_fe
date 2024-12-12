@@ -44,7 +44,7 @@ export default function ReportsDashboard() {
           throw new Error(`Error fetching surveys: ${response.statusText}`);
         }
         const data = await response.json();
-
+   
         setSurveys(data.surveys || []);
       } catch (error) {
         console.error('Failed to fetch surveys:', error);
