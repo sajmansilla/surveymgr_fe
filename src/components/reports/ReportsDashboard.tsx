@@ -391,30 +391,13 @@ export default function ReportsDashboard() {
               )}
             </div>
 
-            {/* Recommendations Card */}
+            {/* Category Trend  Card */}
             <Card className="w-full">
               <CardHeader>
-                <CardTitle>Recommendations</CardTitle>
+                <CardTitle>Categories Trend </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {categoryScoreData.map((data, index) => (
-                  <div
-                    key={index}
-                    className={`flex flex-col p-4 rounded-lg shadow-md ${
-                      data.adviceColor === 'green' ? 'bg-green-100' :
-                      data.adviceColor === 'red' ? 'bg-red-100' :
-                      data.adviceColor === 'yellow' ? 'bg-orange-100' :
-                      'bg-gray-50' // Default color
-                    }`}
-                  >
-                    <div className="text-lg font-semibold text-black">
-                      {data.category}
-                    </div>
-                    <div className="text-sm text-gray-700 mt-2">
-                      {data.advice}
-                    </div>
-                  </div>
-                ))}
+                Chart will be here
               </CardContent>
             </Card>
           </div>
