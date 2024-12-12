@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Label } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Label,LineChart,Line,Legend } from 'recharts';
 
 import {
   Select,
@@ -128,7 +128,7 @@ export default function ReportsDashboard() {
               }
             }
             setCategoryScoreData(newData);
-            console.log('newData', newData);
+            //console.log('newData', newData);
           }
         } catch (error) {
           console.error('Failed to calculate team report data:', error);
@@ -181,7 +181,13 @@ export default function ReportsDashboard() {
       color: '#FF7043' 
     }
   ];
-
+/// define the categoriesTrend //
+  const categoriesTrend = [
+    { month: 'Jan', '2021': 2.5, '2022': 2.8, '2023': 3.0 },
+    { month: 'Feb', '2021': 2.6, '2022': 2.9, '2023': 3.1 },
+    { month: 'Mar', '2021': 2.7, '2022': 3.0, '2023': 3.2 },
+    // Add more months...
+  ];
   
 
   return (
@@ -313,7 +319,7 @@ export default function ReportsDashboard() {
           <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
           <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
           <Tooltip contentStyle={{ fontSize: '12px' }} />
-          <ReferenceLine x={2.75} stroke="red" strokeDasharray="3 3" />
+          <ReferenceLine x={3.25} stroke="red" strokeDasharray="3 3" />
           <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
           <Bar 
             dataKey="score" 
@@ -378,7 +384,7 @@ export default function ReportsDashboard() {
               'bg-gray-50' // Default color
             }`}
           >
-            <div className="text-lg font-semibold text-black">
+            <div style={{ fontSize: '16px', color: 'black', fontWeight: '500', Bold }}>
               {categoryScoreData[0].category}
             </div>
             <div className="text-sm text-gray-700 mt-2">
@@ -393,17 +399,90 @@ export default function ReportsDashboard() {
 
             </div>
 
-            {/* Category Trend  Card */}
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle>Categories Trend </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                Chart will be here
-              </CardContent>
-            </Card>
+  {/* Category Trend  Card */}
+
+            {selectedTeam === "0" ? (
+  <Card>
+    <CardHeader>
+      <CardTitle>Categories Trend</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-center text-gray-600 text-sm">
+       No team selected. Please select a team to view the trend.
+      </div>
+    </CardContent>
+  </Card>
+) : (
+  <Card className="w-full">
+  <CardHeader>
+    <CardTitle>Categories Trend</CardTitle>
+  </CardHeader>
+  <CardContent className="flex justify-center items-center h-full">
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={categoriesTrend}>
+        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+        <YAxis tick={{ fontSize: 12 }} />
+        <Tooltip />
+        <Legend
+          verticalAlign="top"
+          height={36}
+          content={({ payload }) => (
+            <div style={{ display: 'flex', justifyContent: 'center', fontSize: '12px', color: '#555' }}>
+              {payload.map((entry, index) => (
+                <span
+                  key={`item-${index}`}
+                  style={{
+                    marginRight: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      backgroundColor: entry.color,
+                      display: 'inline-block',
+                      marginRight: 5,
+                    }}
+                  />
+                  {entry.value}
+                </span>
+              ))}
+            </div>
+          )}
+        />
+        <Line
+          type="monotone"
+          dataKey="2021"
+          stroke="#2196F3"
+          strokeWidth={2}
+          dot={{ fill: '#2196F3', r: 4 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="2022"
+          stroke="#FF5722"
+          strokeWidth={2}
+          dot={{ fill: '#FF5722', r: 4 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="2023"
+          stroke="#4CAF50"
+          strokeWidth={2}
+          dot={{ fill: '#4CAF50', r: 4 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </CardContent>
+</Card>
+
+
+
+)} 
           </div>
-        </div>
+               </div>
       </div>
     </div>
   );
