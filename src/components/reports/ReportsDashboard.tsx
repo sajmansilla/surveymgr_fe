@@ -44,7 +44,6 @@ export default function ReportsDashboard() {
           throw new Error(`Error fetching surveys: ${response.statusText}`);
         }
         const data = await response.json();
-   
         setSurveys(data.surveys || []);
       } catch (error) {
         console.error('Failed to fetch surveys:', error);
@@ -134,10 +133,10 @@ export default function ReportsDashboard() {
   const selectedTeamIndex = uniqueTeamIds.indexOf(adjustedTeam);
   const selectedTeamName = adjustedTeam === "0" ? "Overall" : uniqueTeamNames[selectedTeamIndex];
 
-  const currentSurveyResponseRate = currentSurvey?.responseRate ?? 0;
-
+  const currentSurveyTeamResponseRate = currentSurvey?.responseRates[selectedTeamIndex] ?? 0;
+ 
   const surveyOverview = [
-    { name: 'Response Rate', value: currentSurveyResponseRate, color: '#FFB74D' },
+    { name: 'Response Rate', value: currentSurveyTeamResponseRate, color: '#2196F3' },
     { 
       name: topScoreCategory.length > 0 ? topScoreCategory[0].category : 'No Top Score', 
       value: topScoreCategory.length > 0 ? topScoreCategory[0].score : 0, 
@@ -239,7 +238,8 @@ export default function ReportsDashboard() {
                         </PieChart>
                       </ResponsiveContainer>
                       <div className="mt-2">
-                        <div className="text-xs text-gray-500">{data.name}</div>
+                      <div style={{ fontSize: '14px', color: 'black', fontWeight: '500' }}>{data.name}</div>
+
                       </div>
                     </div>
                   );
