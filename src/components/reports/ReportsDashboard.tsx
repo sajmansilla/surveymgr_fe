@@ -254,36 +254,50 @@ export default function ReportsDashboard() {
 
             <div className="grid md:grid-cols-2 gap-6">
               
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Team Scores</CardTitle>
-                  </CardHeader>
+            <Card>
+  <CardHeader>
+    <CardTitle>Team Scores</CardTitle>
+  </CardHeader>
 
-                  <CardContent>
-                  {selectedTeam === "0" ? (
-                <div className="text-center text-gray-600 text-sm">
-                  No team selected. Please select a team to view the scores.
-                </div>
-              ) : (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart 
-                        data={categoryScoreData} 
-                        layout="vertical"
-                        margin={{ left: 30 }}
-                      >
-                        <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
-                        <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
-                        <Tooltip contentStyle={{ fontSize: '12px' }} />
-                        <ReferenceLine x={2.75} stroke="red" strokeDasharray="3 3" />
-                        <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
-                        <Bar dataKey="score" fill="#FF9800" name="Score" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                    )}
-                  </CardContent>
-                </Card>
+  <CardContent>
+    {selectedTeam === "0" ? (
+      <div className="text-center text-gray-600 text-sm">
+        No team selected. Please select a team to view the scores.
+      </div>
+    ) : (
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart 
+          data={categoryScoreData} 
+          layout="vertical"
+          margin={{ left: 30 }}
+        >
+          <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
+          <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
+          <Tooltip contentStyle={{ fontSize: '12px' }} />
+          <ReferenceLine x={2.75} stroke="red" strokeDasharray="3 3" />
+          <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
+          <Bar 
+            dataKey="score" 
+            name="Score"
+            shape={(props) => {
+              const { x, y, width, height, fill } = props;
+              const barColor = 
+                props.payload.adviceColor === 'green' ? '#4CAF50' : 
+                props.payload.adviceColor === 'red' ? '#FF5722' : 
+                props.payload.adviceColor === 'yellow' ? '#FF9800' : 
+                '#FF9800'; // Default color
+              return <rect x={x} y={y} width={width} height={height} fill={barColor} />;
+            }}
+          />
+          
+        </BarChart>
+      </ResponsiveContainer>
+    )}
+  </CardContent>
+</Card>
+
               
-
+                
               <Card>
                 <CardHeader>
                   <CardTitle>Credit Rating Distribution</CardTitle>
