@@ -17,7 +17,7 @@ export default function CategoriesGrid() {
         <Link
           key={category.name}
           to={category.href}
-          className="group p-8 rounded-lg hover:bg-secondary bg-card transition-colors duration-200"
+          className="group p-8 rounded-lg hover:shadow bg-card transition-colors duration-200"
         >
           <div className="flex flex-col items-center space-y-4">
             <img
