@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, ReferenceLine } from 'recharts';
 
 import {
   Select,
@@ -264,16 +264,25 @@ const surveyOverview = [
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={categoryScoreData} layout="vertical"  margin={{ left:30 }}>
-                    <XAxis type="number" tick={{ fontSize: 12 }}/>
+                  <BarChart 
+                    data={categoryScoreData} 
+                    layout="vertical"
+                    margin={{ left: 30 }}
+                  >
+                    <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
                     <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
                     <Tooltip contentStyle={{ fontSize: '12px' }} />
+                    
+                    {/* Add ReferenceLines for thresholds */}
+                    <ReferenceLine x={2.75} stroke="red" strokeDasharray="3 3" />
+                    <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
                     
                     <Bar dataKey="score" fill="#FF9800" name="Score" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+
 
 
               <Card>
