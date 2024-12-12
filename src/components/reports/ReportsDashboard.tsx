@@ -76,7 +76,7 @@ export default function ReportsDashboard() {
             throw new Error(`Error in calculateTeamReportData: ${response.statusText}`);
           }
           const result = await response.json();
-
+          console.log('ddsdsds') ; console.log(result);
           const newData: { category: string | number; score: number }[] = [];
 
 
@@ -89,7 +89,8 @@ export default function ReportsDashboard() {
                 const scores = team_category_scores.scores.results;
                 for (const score of scores) {
                   newData.push({
-                    category: score.category_id,
+                    //category: score.category_id,
+                    category: score.category_name,
                     score: score.score
                   });
                 }
@@ -223,14 +224,14 @@ export default function ReportsDashboard() {
               </CardContent>
             </Card>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6" >
               <Card>
                 <CardHeader>
                   <CardTitle>Team Scores </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={categoryScoreData} layout="vertical">
+                    <BarChart data={categoryScoreData} layout="vertical" >
                       <XAxis type="number" />
                       <YAxis dataKey="category" type="category" />
                       <Bar dataKey="score" fill="#FF9800" />
