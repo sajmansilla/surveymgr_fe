@@ -184,7 +184,18 @@ export default function ReportsDashboard() {
       color: '#FF7043'
     }
   ];
+  const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
 
+  // Function to handle legend clicks in the Trend chart
+  const handleLegendClick = (e) => {
+    const categoryName = e.dataKey;
+    setHiddenCategories((prevHidden) =>
+      prevHidden.includes(categoryName)
+        ? prevHidden.filter((cat) => cat !== categoryName) // Remove from hidden
+        : [...prevHidden, categoryName] // Add to hidden
+    );
+  };
+  
   /// get the trend data ////
   async function fetchCategoryTrendData(apiUrl, selectedTeam) {
     try {
@@ -238,15 +249,7 @@ export default function ReportsDashboard() {
 
   console.log("categoriesTrend:", categoriesTrend);
 
-  /*
-const categoriesTrend = [
-  { survey: 'Q1 Survey', Trust: 2.5, Focus: 2.8, Results: 3.0 },
-  { survey: 'Q2 Survey', Trust: 3.0, Focus: 2.9, Results: 3.1 },
-  { survey: 'Q3 Survey', Trust: 2.7, Focus: 3.0, Results: 3.2 },
-  { survey: 'Q4 Survey', Trust: 3.2, Focus: 3.1, Results: 3.5 },
-  { survey: 'Q5 Survey', Trust: 3.2, Focus: 3.1, Results: 5 },
-];
-*/
+  
 
 
   return (
@@ -507,58 +510,64 @@ const categoriesTrend = [
               )}
 
             {/* Category Trend Card */}
-            {selectedTeam === "0" ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Categories Trend</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center text-gray-600 text-sm">
-                    No team selected. Please select a team to view the trend.
-                  </div>
-                </CardContent>
-              </Card>
-            ) : categoriesTrend.length > 0 && categoriesTrend[0] ? ( // Ensure categoriesTrend has data and categoriesTrend[0] exists
-              <Card className="w-full">
-                <CardHeader>
-                  <CardTitle>Categories Trend</CardTitle>
-                </CardHeader>
-                <CardContent className="flex justify-center items-center">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={categoriesTrend}>
-                      <XAxis dataKey="survey" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} domain={[0, 5]} />
-                      <Tooltip contentStyle={{ fontSize: '12px' }} />
-                      <Legend wrapperStyle={{ fontSize: '12px' }} />
-                      {/* Dynamically generate lines for each key in the dataset, excluding 'survey' */}
-                      {Object.keys(categoriesTrend[0])
-                        .filter((key) => key !== 'survey') // Exclude 'survey' key
-                        .map((key, index) => (
-                          <Line
-                            key={key}
-                            type="monotone"
-                            dataKey={key}
-                            stroke={['#4CAF50', '#2196F3', '#FF9800', '#E91E63'][index % 4]} // Rotate colors for lines
-                            strokeWidth={2}
-                            dot={{ r: 3 }}
-                          />
-                        ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Categories Trend</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center text-gray-600 text-sm">
-                    No data available for the selected team. Please ensure data is available.
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+{selectedTeam === "0" ? (
+  <Card>
+    <CardHeader>
+      <CardTitle>Categories Trend</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-center text-gray-600 text-sm">
+        No team selected. Please select a team to view the trend.
+      </div>
+    </CardContent>
+  </Card>
+) : categoriesTrend.length > 0 && categoriesTrend[0] ? (
+  <Card className="w-full">
+    <CardHeader>
+      <CardTitle>Categories Trend</CardTitle>
+    </CardHeader>
+    <CardContent className="flex justify-center items-center">
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={categoriesTrend}>
+          <XAxis dataKey="survey" tick={{ fontSize: 12 }} />
+          <YAxis tick={{ fontSize: 12 }} domain={[0, 5]} />
+          <Tooltip contentStyle={{ fontSize: '12px' }} />
+          <Legend
+            wrapperStyle={{ fontSize: '12px' }}
+            onClick={(e) => handleLegendClick(e)}
+          />
+          {/* Dynamically generate lines for each key in the dataset, excluding 'survey' */}
+          {Object.keys(categoriesTrend[0])
+            .filter((key) => key !== 'survey') // Exclude 'survey' key
+            .map((key, index) => (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                stroke={['#4CAF50', '#2196F3', '#FF9800', '#E91E63'][index % 4]} // Rotate colors for lines
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                hide={hiddenCategories.includes(key)} // Conditionally hide lines
+              />
+            ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </CardContent>
+  </Card>
+) : (
+  <Card>
+    <CardHeader>
+      <CardTitle>Categories Trend</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-center text-gray-600 text-sm">
+        No data available for the selected team. Please ensure data is available.
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+         
 
           </div>
         </div>
