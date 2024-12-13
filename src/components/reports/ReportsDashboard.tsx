@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Label,LineChart,Line,Legend } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Label, LineChart, Line, Legend } from 'recharts';
 
 import {
   Select,
@@ -171,21 +171,21 @@ export default function ReportsDashboard() {
 
   // Prepare survey overview data
   const surveyOverview = [
-   { name: selectedTeam > 0 ? 'Response Rate' : 'No Response Rate', value: selectedTeam > 0? currentSurveyTeamResponseRate : 0, color: '#2196F3' },
-    { 
-      
-      name: topScoreCategory.length > 0 && selectedTeam > 0 ? topScoreCategory[0].category : 'No Top Score', 
-      value: topScoreCategory.length  > 0 && selectedTeam > 0 ? topScoreCategory[0].score : 0, 
-      color: '#4CAF50' 
+    { name: selectedTeam > 0 ? 'Response Rate' : 'No Response Rate', value: selectedTeam > 0 ? currentSurveyTeamResponseRate : 0, color: '#2196F3' },
+    {
+
+      name: topScoreCategory.length > 0 && selectedTeam > 0 ? topScoreCategory[0].category : 'No Top Score',
+      value: topScoreCategory.length > 0 && selectedTeam > 0 ? topScoreCategory[0].score : 0,
+      color: '#4CAF50'
     },
-    { 
-      name: lowScoreCategory.length > 0 && selectedTeam > 0 ? lowScoreCategory[0].category : 'No Low Score', 
-      value: lowScoreCategory.length > 0 && selectedTeam > 0 ? lowScoreCategory[0].score : 0, 
-      color: '#FF7043' 
+    {
+      name: lowScoreCategory.length > 0 && selectedTeam > 0 ? lowScoreCategory[0].category : 'No Low Score',
+      value: lowScoreCategory.length > 0 && selectedTeam > 0 ? lowScoreCategory[0].score : 0,
+      color: '#FF7043'
     }
   ];
 
-/// get the trend data ////
+  /// get the trend data ////
   async function fetchCategoryTrendData(apiUrl, selectedTeam) {
     try {
       // Fetch data from the API
@@ -193,20 +193,25 @@ export default function ReportsDashboard() {
       if (!response.ok) {
         throw new Error(`Error fetching data: ${response.statusText}`);
       }
-  
+
       const apiData = await response.json();
-  
+
+      // Filter surveys to include only those with responses
+      const filteredData = apiData.filter(
+        (survey) => Array.isArray(survey.results) && survey.results.length > 0
+      );
+
       // Construct the data array
-      const surveyData = apiData.map((survey) => {
+      const surveyData = filteredData.map((survey) => {
         const row = { survey: survey.Survey }; // Start each row with the survey name
-  
+
         survey.results.forEach((result) => {
           row[result.category_name] = result.average; // Add each category as a key
         });
-  
+
         return row;
       });
-  
+
       console.log("Constructed Trend Data:", surveyData);
       return surveyData;
     } catch (error) {
@@ -214,21 +219,22 @@ export default function ReportsDashboard() {
       return [];
     }
   }
-// Inside the component
-const [categoriesTrend, setCategoriesTrend] = useState([]); // Use state to store categoriesTrend
 
-useEffect(() => {
-  if (selectedTeam !== "0") {
-    fetchCategoryTrendData(apiUrl, selectedTeam)
-      .then((result) => {
-        setCategoriesTrend(result); // Update state with fetched data
-        console.log("categoriesTrend:", result);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch and construct categoriesTrend:", error);
-      });
-  }
-}, [apiUrl, selectedTeam]); // Re-fetch data whenever `selectedTeam` changes
+  // Inside the component
+  const [categoriesTrend, setCategoriesTrend] = useState([]); // Use state to store categoriesTrend
+
+  useEffect(() => {
+    if (selectedTeam !== "0") {
+      fetchCategoryTrendData(apiUrl, selectedTeam)
+        .then((result) => {
+          setCategoriesTrend(result); // Update state with fetched data
+          console.log("categoriesTrend:", result);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch and construct categoriesTrend:", error);
+        });
+    }
+  }, [apiUrl, selectedTeam]); // Re-fetch data whenever `selectedTeam` changes
 
   console.log("categoriesTrend:", categoriesTrend);
 
@@ -241,7 +247,7 @@ const categoriesTrend = [
   { survey: 'Q5 Survey', Trust: 3.2, Focus: 3.1, Results: 5 },
 ];
 */
-    
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -254,7 +260,7 @@ const categoriesTrend = [
 
       <div className="flex min-h-[calc(100vh-112px)]">
         {/* Sidebar */}
-        <div className="w-64 border-r bg-white p-6">            
+        <div className="w-64 border-r bg-white p-6">
 
           <div className="text-xl font-semibold mb-4">Survey List</div>
           <div className="space-y-2">
@@ -265,9 +271,8 @@ const categoriesTrend = [
                 <button
                   key={survey.id}
                   onClick={() => handleSurveyClick(survey.id)}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-50 ${
-                    currentSurveyId === survey.id ? 'bg-gray-200' : ''
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-50 ${currentSurveyId === survey.id ? 'bg-gray-200' : ''
+                    }`}
                 >
                   {survey.name}
                 </button>
@@ -293,7 +298,7 @@ const categoriesTrend = [
                 <SelectItem value="0">Select a team</SelectItem>
                 {uniqueTeamNames.map((teamName, index) => (
                   <SelectItem
-                    key={`${currentSurveyId}-${index}`} 
+                    key={`${currentSurveyId}-${index}`}
                     value={uniqueTeamIds[index]}
                   >
                     Team {teamName}
@@ -313,7 +318,7 @@ const categoriesTrend = [
             {/* Survey Overview Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Survey Overview</CardTitle> 
+                <CardTitle>Survey Overview</CardTitle>
               </CardHeader>
               <CardContent className="flex justify-around h-[200px]">
                 {surveyOverview.map((data, index) => {
@@ -353,212 +358,210 @@ const categoriesTrend = [
             <div className="grid md:grid-cols-2 gap-6">
               {/* Team Scores Card */}
               <Card>
-  <CardHeader>
-    <CardTitle>Team Scores</CardTitle>
-  </CardHeader>
+                <CardHeader>
+                  <CardTitle>Team Scores</CardTitle>
+                </CardHeader>
 
-  <CardContent>
-    {selectedTeam === "0" ? (
-      <div className="text-center text-gray-600 text-sm">
-        No team selected. Please select a team to view the scores.
-      </div>
-    ) : (
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart 
-          data={categoryScoreData} 
-          layout="vertical"
-          margin={{ left: 30 }}
-        >
-          <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
-          <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
-          <Tooltip contentStyle={{ fontSize: '12px' }} />
-          <ReferenceLine x={3.25} stroke="red" strokeDasharray="3 3" />
-          <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
-          <Bar 
-            dataKey="score" 
-            name="Score"
-            onClick={(data) => {
-              setSelectedCategory(data);
-            }}
-            shape={(props) => {
-              const { x, y, width, height } = props;
-              const barColor = 
-                props.payload.adviceColor === 'green' ? '#4CAF50' : 
-                props.payload.adviceColor === 'red' ? '#FF5722' : 
-                props.payload.adviceColor === 'yellow' ? '#FF9800' : 
-                '#FF9800'; // Default color
-              return <rect x={x} y={y} width={width} height={height} fill={barColor} />;
-            }}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    )}
-  </CardContent>
-</Card>
+                <CardContent>
+                  {selectedTeam === "0" ? (
+                    <div className="text-center text-gray-600 text-sm">
+                      No team selected. Please select a team to view the scores.
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart
+                        data={categoryScoreData}
+                        layout="vertical"
+                        margin={{ left: 30 }}
+                      >
+                        <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
+                        <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
+                        <Tooltip contentStyle={{ fontSize: '12px' }} />
+                        <ReferenceLine x={3.25} stroke="red" strokeDasharray="3 3" />
+                        <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
+                        <Bar
+                          dataKey="score"
+                          name="Score"
+                          onClick={(data) => {
+                            setSelectedCategory(data);
+                          }}
+                          shape={(props) => {
+                            const { x, y, width, height } = props;
+                            const barColor =
+                              props.payload.adviceColor === 'green' ? '#4CAF50' :
+                                props.payload.adviceColor === 'red' ? '#FF5722' :
+                                  props.payload.adviceColor === 'yellow' ? '#FF9800' :
+                                    '#FF9800'; // Default color
+                            return <rect x={x} y={y} width={width} height={height} fill={barColor} />;
+                          }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
 
- {/* Conditional Rendering: Category Recommendations */}
-{selectedTeam === "0" ? (
-  <Card>
-    <CardHeader>
-      <CardTitle>Category Recommendations</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-center text-gray-600 text-sm">
-       No team selected. Please select a team to view the recommendations.
-      </div>
-    </CardContent>
-  </Card>
-) : (
-  <Card>
-    <CardHeader>
-      <CardTitle>Category Recommendations</CardTitle>
-    </CardHeader>
-    <CardContent>
-      {selectedCategory ? (
-        <div
-          className={`flex flex-col p-4 rounded-lg shadow-md ${
-            selectedCategory.adviceColor === 'green' ? 'bg-green-100' :
-            selectedCategory.adviceColor === 'red' ? 'bg-red-100' :
-            selectedCategory.adviceColor === 'yellow' ? 'bg-orange-100' :
-            'bg-gray-50' // Default color
-          }`}
-        >
-         
-           <div style={{ fontSize: '16px', color: 'black', fontWeight: '500', Bold }}>{selectedCategory.category}</div>
-          <div className="text-sm text-gray-700 mt-2"> {selectedCategory.advice}</div>
+              {/* Conditional Rendering: Category Recommendations */}
+              {selectedTeam === "0" ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Category Recommendations</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center text-gray-600 text-sm">
+                      No team selected. Please select a team to view the recommendations.
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Category Recommendations</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedCategory ? (
+                      <div
+                        className={`flex flex-col p-4 rounded-lg shadow-md ${selectedCategory.adviceColor === 'green' ? 'bg-green-100' :
+                          selectedCategory.adviceColor === 'red' ? 'bg-red-100' :
+                            selectedCategory.adviceColor === 'yellow' ? 'bg-orange-100' :
+                              'bg-gray-50' // Default color
+                          }`}
+                      >
+
+                        <div style={{ fontSize: '16px', color: 'black', fontWeight: '500', Bold }}>{selectedCategory.category}</div>
+                        <div className="text-sm text-gray-700 mt-2"> {selectedCategory.advice}</div>
+                      </div>
+                    ) : (
+                      categoryScoreData.length > 0 && (
+                        <div
+                          className={`flex flex-col p-4 rounded-lg shadow-md ${categoryScoreData[0].adviceColor === 'green' ? 'bg-green-100' :
+                            categoryScoreData[0].adviceColor === 'red' ? 'bg-red-100' :
+                              categoryScoreData[0].adviceColor === 'yellow' ? 'bg-orange-100' :
+                                'bg-gray-50' // Default color
+                            }`}
+                        >
+                          <div style={{ fontSize: '16px', color: 'black', fontWeight: '500', Bold }}>
+                            {categoryScoreData[0].category}
+                          </div>
+                          <div className="text-sm text-gray-700 mt-2">
+                            {categoryScoreData[0].advice}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+            </div>
+            {/* Category Questions Card */}
+
+            {selectedTeam === "0" ?
+              (
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Category Questions </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center text-gray-600 text-sm">
+                      No team selected. Please select a team to view the questions.
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (<Card>
+                <CardHeader>
+                  <CardTitle>Category XYZ Questions (WORK IN PROGRESS)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center text-gray-600 text-sm">
+                    {selectedCategory ? (
+                      <div
+                        className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white"
+                      >
+                        <div className="text-center text-gray-600 text-sm">
+                          Q1 : When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
+                        </div>
+                        <div className="text-sm text-gray-700 text-left">
+                          {selectedCategory.score}
+                        </div>
+                      </div>
+                    ) : (
+                      categoryScoreData.length > 0 && (
+                        <div
+                          className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white"
+                        >
+                          <div className="text-center text-gray-600 text-sm">
+                            Q2 : When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
+                          </div>
+                          <div className="text-sm text-gray-700 text-left">
+                            {categoryScoreData[0].score}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              )}
+
+            {/* Category Trend Card */}
+            {selectedTeam === "0" ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Categories Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center text-gray-600 text-sm">
+                    No team selected. Please select a team to view the trend.
+                  </div>
+                </CardContent>
+              </Card>
+            ) : categoriesTrend.length > 0 && categoriesTrend[0] ? ( // Ensure categoriesTrend has data and categoriesTrend[0] exists
+              <Card className="w-full">
+                <CardHeader>
+                  <CardTitle>Categories Trend</CardTitle>
+                </CardHeader>
+                <CardContent className="flex justify-center items-center">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={categoriesTrend}>
+                      <XAxis dataKey="survey" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} domain={[0, 5]} />
+                      <Tooltip contentStyle={{ fontSize: '12px' }} />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      {/* Dynamically generate lines for each key in the dataset, excluding 'survey' */}
+                      {Object.keys(categoriesTrend[0])
+                        .filter((key) => key !== 'survey') // Exclude 'survey' key
+                        .map((key, index) => (
+                          <Line
+                            key={key}
+                            type="monotone"
+                            dataKey={key}
+                            stroke={['#4CAF50', '#2196F3', '#FF9800', '#E91E63'][index % 4]} // Rotate colors for lines
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                          />
+                        ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Categories Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center text-gray-600 text-sm">
+                    No data available for the selected team. Please ensure data is available.
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+          </div>
         </div>
-      ) : (
-        categoryScoreData.length > 0 && (
-          <div
-            className={`flex flex-col p-4 rounded-lg shadow-md ${
-              categoryScoreData[0].adviceColor === 'green' ? 'bg-green-100' :
-              categoryScoreData[0].adviceColor === 'red' ? 'bg-red-100' :
-              categoryScoreData[0].adviceColor === 'yellow' ? 'bg-orange-100' :
-              'bg-gray-50' // Default color
-            }`}
-          >
-            <div style={{ fontSize: '16px', color: 'black', fontWeight: '500', Bold }}>
-              {categoryScoreData[0].category}
-            </div>
-            <div className="text-sm text-gray-700 mt-2">
-              {categoryScoreData[0].advice}
-            </div>
-          </div>
-        )
-      )}
-    </CardContent>
-  </Card>
-)}
-
-            </div>
- {/* Category Questions Card */}
-
- {selectedTeam === "0" ? 
- (
-  
-  <Card>
-    <CardHeader>
-      <CardTitle>Category Questions </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-center text-gray-600 text-sm">
-       No team selected. Please select a team to view the questions.
-      </div>
-    </CardContent>
-  </Card>
- ):(<Card>
-  <CardHeader>
-    <CardTitle>Category XYZ Questions</CardTitle>
-  </CardHeader>
-  <CardContent>
-    <div className="text-center text-gray-600 text-sm">
-      {selectedCategory ? (
-       <div
-       className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white"
-     >
-          <div className="text-center text-gray-600 text-sm">
-          Q1 : When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
-          </div>
-          <div className="text-sm text-gray-700 text-left">
-            {selectedCategory.score}
-          </div>
-        </div>
-      ) : (
-        categoryScoreData.length > 0 && (
-          <div
-            className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white"
-          >
-            <div className="text-center text-gray-600 text-sm">
-            Q2 : When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
-            </div>
-            <div className="text-sm text-gray-700 text-left">
-              {categoryScoreData[0].score}
-            </div>
-          </div>
-        )
-      )}
-    </div>
-  </CardContent>
-</Card>
-
-)}
-
- {/* Category Trend Card */}
-{selectedTeam === "0" ? (
-  <Card>
-    <CardHeader>
-      <CardTitle>Categories Trend</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-center text-gray-600 text-sm">
-        No team selected. Please select a team to view the trend.
-      </div>
-    </CardContent>
-  </Card>
-) : categoriesTrend.length > 0 && categoriesTrend[0] ? ( // Ensure categoriesTrend has data and categoriesTrend[0] exists
-  <Card className="w-full">
-    <CardHeader>
-      <CardTitle>Categories Trend</CardTitle>
-    </CardHeader>
-    <CardContent className="flex justify-center items-center">
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={categoriesTrend}>
-          <XAxis dataKey="survey" tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 12 }} domain={[0, 5]} />
-          <Tooltip contentStyle={{ fontSize: '12px' }} />
-          <Legend wrapperStyle={{ fontSize: '12px' }} />
-          {/* Dynamically generate lines for each key in the dataset, excluding 'survey' */}
-          {Object.keys(categoriesTrend[0])
-            .filter((key) => key !== 'survey') // Exclude 'survey' key
-            .map((key, index) => (
-              <Line
-                key={key}
-                type="monotone"
-                dataKey={key}
-                stroke={['#4CAF50', '#2196F3', '#FF9800', '#E91E63'][index % 4]} // Rotate colors for lines
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-            ))}
-        </LineChart>
-      </ResponsiveContainer>
-    </CardContent>
-  </Card>
-) : (
-  <Card>
-    <CardHeader>
-      <CardTitle>Categories Trend</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-center text-gray-600 text-sm">
-        No data available for the selected team. Please ensure data is available.
-      </div>
-    </CardContent>
-  </Card>
-)}
- 
-          </div>
-               </div>
       </div>
     </div>
   );
