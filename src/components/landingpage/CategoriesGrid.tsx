@@ -12,7 +12,7 @@ const categories = [
 
 export default function CategoriesGrid() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto font-body">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
       {categories.map((category) => (
         <Link
           key={category.name}
@@ -25,7 +25,7 @@ export default function CategoriesGrid() {
               alt={category.name}
               className="w-16 h-16"
             />
-            <span className="text-xl tracking-wide text-primary font-bold">
+            <span className="text-xl tracking-wide text-primary font-semibold">
               {'{ '}
               {category.name
                 .toLowerCase()

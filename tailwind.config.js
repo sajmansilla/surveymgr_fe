@@ -19,7 +19,7 @@ module.exports = {
       },
       fontWeight: {
         regular: 400,
-        semibold: 550,
+        semibold: 450,
         bold: 700,
       },
 
