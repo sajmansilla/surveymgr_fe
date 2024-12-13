@@ -28,6 +28,8 @@ interface Survey {
   created_by?: string;
 }
 
+
+
 // Define the type for category score data
 interface CategoryScore {
   category: string | number;
@@ -35,6 +37,7 @@ interface CategoryScore {
   advice: string;
   adviceColor: string;
 }
+
 
 export default function ReportsDashboard() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
@@ -181,7 +184,55 @@ export default function ReportsDashboard() {
       color: '#FF7043' 
     }
   ];
-/// define the categoriesTrend //
+
+/// get the trend data ////
+  async function fetchCategoryTrendData(apiUrl, selectedTeam) {
+    try {
+      // Fetch data from the API
+      const response = await fetch(`${apiUrl}/api/report/${selectedTeam}`);
+      if (!response.ok) {
+        throw new Error(`Error fetching data: ${response.statusText}`);
+      }
+  
+      const apiData = await response.json();
+  
+      // Construct the data array
+      const surveyData = apiData.map((survey) => {
+        const row = { survey: survey.Survey }; // Start each row with the survey name
+  
+        survey.results.forEach((result) => {
+          row[result.category_name] = result.average; // Add each category as a key
+        });
+  
+        return row;
+      });
+  
+      console.log("Constructed Trend Data:", surveyData);
+      return surveyData;
+    } catch (error) {
+      console.error("Error constructing Trend data:", error);
+      return [];
+    }
+  }
+// Inside the component
+const [categoriesTrend, setCategoriesTrend] = useState([]); // Use state to store categoriesTrend
+
+useEffect(() => {
+  if (selectedTeam !== "0") {
+    fetchCategoryTrendData(apiUrl, selectedTeam)
+      .then((result) => {
+        setCategoriesTrend(result); // Update state with fetched data
+        console.log("categoriesTrend:", result);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch and construct categoriesTrend:", error);
+      });
+  }
+}, [apiUrl, selectedTeam]); // Re-fetch data whenever `selectedTeam` changes
+
+  console.log("categoriesTrend:", categoriesTrend);
+
+  /*
 const categoriesTrend = [
   { survey: 'Q1 Survey', Trust: 2.5, Focus: 2.8, Results: 3.0 },
   { survey: 'Q2 Survey', Trust: 3.0, Focus: 2.9, Results: 3.1 },
@@ -189,8 +240,8 @@ const categoriesTrend = [
   { survey: 'Q4 Survey', Trust: 3.2, Focus: 3.1, Results: 3.5 },
   { survey: 'Q5 Survey', Trust: 3.2, Focus: 3.1, Results: 5 },
 ];
-
-  
+*/
+    
 
   return (
     <div className="min-h-screen bg-white">
@@ -345,7 +396,7 @@ const categoriesTrend = [
   </CardContent>
 </Card>
 
-           {/* Conditional Rendering: Category Recommendations */}
+ {/* Conditional Rendering: Category Recommendations */}
 {selectedTeam === "0" ? (
   <Card>
     <CardHeader>
@@ -400,54 +451,112 @@ const categoriesTrend = [
 )}
 
             </div>
+ {/* Category Questions Card */}
 
-  {/* Category Trend  Card */}
+ {selectedTeam === "0" ? 
+ (
+  
+  <Card>
+    <CardHeader>
+      <CardTitle>Category Questions </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-center text-gray-600 text-sm">
+       No team selected. Please select a team to view the questions.
+      </div>
+    </CardContent>
+  </Card>
+ ):(<Card>
+  <CardHeader>
+    <CardTitle>Category XYZ Questions</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="text-center text-gray-600 text-sm">
+      {selectedCategory ? (
+       <div
+       className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white"
+     >
+          <div className="text-center text-gray-600 text-sm">
+          Q1 : When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
+          </div>
+          <div className="text-sm text-gray-700 text-left">
+            {selectedCategory.score}
+          </div>
+        </div>
+      ) : (
+        categoryScoreData.length > 0 && (
+          <div
+            className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white"
+          >
+            <div className="text-center text-gray-600 text-sm">
+            Q2 : When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
+            </div>
+            <div className="text-sm text-gray-700 text-left">
+              {categoryScoreData[0].score}
+            </div>
+          </div>
+        )
+      )}
+    </div>
+  </CardContent>
+</Card>
 
-            {selectedTeam === "0" ? (
+)}
+
+ {/* Category Trend Card */}
+{selectedTeam === "0" ? (
   <Card>
     <CardHeader>
       <CardTitle>Categories Trend</CardTitle>
     </CardHeader>
     <CardContent>
       <div className="text-center text-gray-600 text-sm">
-       No team selected. Please select a team to view the trend.
+        No team selected. Please select a team to view the trend.
       </div>
     </CardContent>
   </Card>
-) : (
+) : categoriesTrend.length > 0 && categoriesTrend[0] ? ( // Ensure categoriesTrend has data and categoriesTrend[0] exists
   <Card className="w-full">
-  <CardHeader>
-    <CardTitle>Categories Trend</CardTitle>
-  </CardHeader>
-  <CardContent className="flex justify-center items-center">
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={categoriesTrend}>
-        <XAxis dataKey="survey" tick={{ fontSize: 12 }} />
-        <YAxis tick={{ fontSize: 12 }} domain={[0, 5]} />
-        <Tooltip contentStyle={{ fontSize: '12px' }} />
-        <Legend wrapperStyle={{ fontSize: '12px' }} />
-        {/* Dynamically generate lines for each key in the dataset, excluding 'survey' */}
-        {Object.keys(categoriesTrend[0])
-          .filter((key) => key !== 'survey')
-          .map((key, index) => (
-            <Line
-              key={key}
-              type="monotone"
-              dataKey={key}
-              stroke={['#4CAF50', '#2196F3', '#FF9800', '#E91E63'][index % 4]} // Rotate colors for lines
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-          ))}
-      </LineChart>
-    </ResponsiveContainer>
-  </CardContent>
-</Card>
-
-
-
-
-)} 
+    <CardHeader>
+      <CardTitle>Categories Trend</CardTitle>
+    </CardHeader>
+    <CardContent className="flex justify-center items-center">
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={categoriesTrend}>
+          <XAxis dataKey="survey" tick={{ fontSize: 12 }} />
+          <YAxis tick={{ fontSize: 12 }} domain={[0, 5]} />
+          <Tooltip contentStyle={{ fontSize: '12px' }} />
+          <Legend wrapperStyle={{ fontSize: '12px' }} />
+          {/* Dynamically generate lines for each key in the dataset, excluding 'survey' */}
+          {Object.keys(categoriesTrend[0])
+            .filter((key) => key !== 'survey') // Exclude 'survey' key
+            .map((key, index) => (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                stroke={['#4CAF50', '#2196F3', '#FF9800', '#E91E63'][index % 4]} // Rotate colors for lines
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+            ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </CardContent>
+  </Card>
+) : (
+  <Card>
+    <CardHeader>
+      <CardTitle>Categories Trend</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-center text-gray-600 text-sm">
+        No data available for the selected team. Please ensure data is available.
+      </div>
+    </CardContent>
+  </Card>
+)}
+ 
           </div>
                </div>
       </div>
