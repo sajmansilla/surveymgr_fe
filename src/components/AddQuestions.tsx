@@ -30,8 +30,9 @@ export default function QuestionForm() {
 
   useEffect(() => {
     const fetchCategories = async () => {
+      const apiUrl = import.meta.env.VITE_API_URL;
       try {
-        const response = await fetch('http://localhost:3001/api/categories');
+        const response = await fetch(`${apiUrl}/api/categories`);
         if (!response.ok) {
           throw new Error('Failed to fetch categories');
         }
@@ -74,9 +75,10 @@ export default function QuestionForm() {
     setIsLoading(true);
     setError(null);
     setSuccess(false);
+    const apiUrl = import.meta.env.VITE_API_URL;
 
     try {
-      const response = await fetch('http://localhost:3001/api/questions', {
+      const response = await fetch(`${apiUrl}/api/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

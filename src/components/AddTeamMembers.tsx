@@ -25,11 +25,13 @@ export default function TeamManagement() {
 
   useEffect(() => {
     const fetchData = async () => {
+
+    const apiUrl = import.meta.env.VITE_API_URL;
       try {
         const [teamsRes, peopleRes, membersRes] = await Promise.all([
-          fetch('http://localhost:3001/api/teams'),
-          fetch('http://localhost:3001/api/people'),
-          fetch('http://localhost:3001/api/teammembers')
+          fetch(`${apiUrl}/api/teams`),
+          fetch(`${apiUrl}/api/people`),
+          fetch(`${apiUrl}/api/teammembers`)
         ]).then(responses => Promise.all(responses.map(response => response.json())));
 
         setTeams(teamsRes.teams);

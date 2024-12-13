@@ -44,8 +44,8 @@ const AddTeams = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      console.log(values.teams);
-      const response = await fetch("http://localhost:3001/api/teams", {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/api/teams`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values.teams),
