@@ -28,15 +28,7 @@ export default function CategoriesGrid() {
             <span className="text-xl tracking-wide text-primary font-semibold">
               {'{ '}
               {category.name
-                .toLowerCase()
-                .split(' ')
-                .map((word, index, array) => (
-                  <React.Fragment key={index}>
-                    {index > 0 && <br />}
-                    {word}
-                    {index === array.length - 1 ? '' : ''}
-                  </React.Fragment>
-                ))}
+                .toLowerCase()}
               {' };'}
             </span>
           </div>
