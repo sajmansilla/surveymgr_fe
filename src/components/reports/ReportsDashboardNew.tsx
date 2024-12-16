@@ -2,35 +2,9 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Tooltip,
-  ReferenceLine,
-  Label,
-  LineChart,
-  Line,
-  Legend,
-} from 'recharts';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import {Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import {PieChart,Pie,Cell,BarChart,Bar,XAxis,YAxis,ResponsiveContainer,Tooltip,ReferenceLine,Label,LineChart,Line,Legend,} from 'recharts';
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from '@/components/ui/select';
 
 // API Base URL
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -50,12 +24,16 @@ interface Survey {
 }
 
 interface CategoryScore {
+  category_id: number;
   category: string | number;
   score: number;
   advice: string;
   adviceColor: string;
 }
-
+interface CategoryQuestions {
+  category_id: number;
+  questions: { question_id: number; question: string; score: number }[];
+}
 interface TrendData {
   survey: string;
   [category: string]: string | number;
@@ -72,7 +50,7 @@ export default function ReportsDashboardNew() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoriesTrend, setCategoriesTrend] = useState<TrendData[]>([]);
   const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
-
+  const [categoryQuestions, setCategoryQuestions] = useState<CategoryQuestions[]>([]); 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -148,6 +126,7 @@ export default function ReportsDashboardNew() {
     fetchSurveys();
   }, []);
 
+
   // Fetch Report Data
   useEffect(() => {
     const calculateReportData = async () => {
@@ -169,6 +148,7 @@ export default function ReportsDashboardNew() {
         const categoryScores: CategoryScore[] = [];
         const topScores: CategoryScore[] = [];
         const lowScores: CategoryScore[] = [];
+        console.log('calculateReportData results',result);
 
         result.category_scores.forEach((teamCategoryScores: any) => {
           if (teamCategoryScores.teamId === selectedTeam) {
@@ -190,6 +170,7 @@ export default function ReportsDashboardNew() {
                 });
               }
               categoryScores.push({
+                category_id : score.category_id,
                 category: score.category_name,
                 score: score.score,
                 advice: score.advice,
@@ -210,7 +191,46 @@ export default function ReportsDashboardNew() {
     calculateReportData();
   }, [currentSurveyId, selectedTeam]);
 
-  // Fetch Trend Data
+// Fetch Categories and Questions with survey_id and team_id as parameters
+useEffect(() => {
+  const fetchCategoriesAndQuestions = async () => {
+    if (!currentSurveyId || selectedTeam === '0') {
+      console.log('Invalid survey or team selection');
+      return;
+    }
+
+    try {
+      console.log(`Fetching questions for survey_id: ${currentSurveyId}, team_id: ${selectedTeam}`);
+
+      const response = await fetch(`${apiUrl}/api/getQuestions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          survey_id: currentSurveyId,
+          team_id: selectedTeam,
+        }), // Pass survey_id and team_id in the body
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching categories: ${response.statusText}`);
+      }
+
+      const data: CategoryQuestions[] = await response.json();
+      console.log('Fetched questions data:', data); // Debug log for API response
+
+      //setSelectedCategory("1");
+      setCategoryQuestions(data); // Update state with the fetched data
+    } catch (error) {
+      console.error('Failed to fetch categories and questions:', error);
+    }
+  };
+
+  fetchCategoriesAndQuestions();
+}, [currentSurveyId, selectedTeam]); // Re-run whenever currentSurveyId or selectedTeam changes
+
+  //////////// Fetch Trend Data
   useEffect(() => {
     const fetchTrendData = async () => {
       if (selectedTeam === '0') return;
@@ -473,30 +493,46 @@ export default function ReportsDashboardNew() {
                 <CardTitle> {selectedCategory? `Category ${selectedCategory.category} Questions`: categoryScoreData.length > 0 ? `Category ${categoryScoreData[0].category} Questions `:"Category Questions" }</CardTitle>
                 </CardHeader>
                 <CardContent>
-    <div className="text-center text-gray-600 text-sm">
-      {selectedCategory ? (
-        <div className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white">
-          <div className="text-center text-gray-600 text-sm">
-            Q1: When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
+  <div className="text-gray-600 text-sm w-full">
+    {categoryQuestions.length > 0 && (selectedCategory || categoryScoreData.length > 0) ? (
+      categoryQuestions
+        .filter((category) =>
+          selectedCategory
+            ? category.category_id === selectedCategory.category_id
+            : category.category_id === categoryScoreData[0]?.category_id
+        )
+        .map((category) => (
+          <div
+            key={category.category_id}
+            className="w-full p-4 rounded-lg shadow-md bg-white"
+          >
+            <ul className="mt-2 space-y-2 text-left w-full">
+              {category.questions.map((question, index) => (
+                <li key={question.question_id} className="grid grid-cols-[3fr_1fr] gap-4 items-center w-full">
+                  <span>
+                    {index + 1}. {question.question}
+                  </span>
+                  <span className="font-semibold text-gray-700 text-right">
+                    Score: "{question.Score}"
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="text-sm text-gray-700 text-left">{selectedCategory.score}</div>
-        </div>
-      ) : categoryScoreData.length > 0 ? (
-        <div className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white">
-          <div className="text-center text-gray-600 text-sm">
-            Q2: When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
-          </div>
-          <div className="text-sm text-gray-700 text-left">{categoryScoreData[0].score}</div>
-        </div>
-      ) : (
-        "No data available"
-      )}
-    </div>
-  </CardContent>
+        ))
+    ) : (
+      <span>No data available</span>
+    )}
+  </div>
+</CardContent>
+
               </Card>
 
               )}
               {/* Category Trend Card */}
+
+             
+
 {selectedTeam === "0" ? (
   <Card>
     <CardHeader>
