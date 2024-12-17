@@ -1,57 +1,114 @@
 'use client';
 
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Label, LineChart, Line, Legend } from 'recharts';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import {Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import {PieChart,Pie,Cell,BarChart,Bar,XAxis,YAxis,ResponsiveContainer,Tooltip,ReferenceLine,Label,LineChart,Line,Legend,} from 'recharts';
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from '@/components/ui/select';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Bold } from "lucide-react";
+// API Base URL
+const apiUrl = import.meta.env.VITE_API_URL;
 
-// Define the type for a survey
+// Interfaces
 interface Survey {
   id: number;
   name: string;
   teamNames: string[];
-  teamIds: string[]; // Assuming teamIds are also part of the survey data
+  teamIds: string[];
   description?: string;
   date_start?: string;
   date_end?: string;
-  responseRates?: number[]; // Assuming responseRates is an array indexed by team
+  responseRates?: number[];
   createdAt?: string;
   created_by?: string;
 }
 
-
-
-// Define the type for category score data
 interface CategoryScore {
+  category_id: number;
   category: string | number;
   score: number;
   advice: string;
   adviceColor: string;
 }
+interface CategoryQuestions {
+  category_id: number;
+  questions: { question_id: number; question: string; score: number }[];
+}
+interface TrendData {
+  survey: string;
+  [category: string]: string | number;
+}
 
-
-export default function ReportsDashboard() {
+// Component
+export default function ReportsDashboardNew() {
+  // State Variables
   const [surveys, setSurveys] = useState<Survey[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<string>("0");
+  const [selectedTeam, setSelectedTeam] = useState<string>('0');
   const [categoryScoreData, setCategoryScoreData] = useState<CategoryScore[]>([]);
-  const [lowScoreCategory, setLowScoreCategory] = useState<{ category: string | number; score: number }[]>([]);
-  const [topScoreCategory, setTopScoreCategory] = useState<{ category: string | number; score: number }[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // New state for selected category
-
+  const [lowScoreCategory, setLowScoreCategory] = useState<CategoryScore[]>([]);
+  const [topScoreCategory, setTopScoreCategory] = useState<CategoryScore[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [categoriesTrend, setCategoriesTrend] = useState<TrendData[]>([]);
+  const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
+  const [categoryQuestions, setCategoryQuestions] = useState<CategoryQuestions[]>([]); 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const apiUrl = import.meta.env.VITE_API_URL;
 
-  // Fetch surveys from the API
+  // Derived Values
+  const paramSurveyId = searchParams.get('surveyId');
+  const currentSurveyId = useMemo(() => {
+    const defaultId = surveys.length > 0 ? surveys[0].id : null;
+    return paramSurveyId ? Number(paramSurveyId) : defaultId;
+  }, [paramSurveyId, surveys]);
+
+  const currentSurvey = useMemo(
+    () => surveys.find((survey) => survey.id === currentSurveyId),
+    [surveys, currentSurveyId]
+  );
+
+  const uniqueTeamNames = useMemo(
+    () => (currentSurvey ? Array.from(new Set(currentSurvey.teamNames)) : []),
+    [currentSurvey]
+  );
+  const uniqueTeamIds = useMemo(
+    () => (currentSurvey ? Array.from(new Set(currentSurvey.teamIds)) : []),
+    [currentSurvey]
+  );
+
+  const selectedTeamIndex = useMemo(
+    () => uniqueTeamIds.indexOf(selectedTeam === '0' ? uniqueTeamIds[0] : selectedTeam),
+    [selectedTeam, uniqueTeamIds]
+  );
+
+  const selectedTeamName = selectedTeam === '0' ? '' : uniqueTeamNames[selectedTeamIndex];
+  const currentSurveyTeamResponseRate = useMemo(
+    () =>
+      currentSurvey?.responseRates?.[selectedTeamIndex] ?? 0,
+    [currentSurvey, selectedTeamIndex]
+  );
+
+  const surveyOverview = useMemo(
+    () => [
+      {
+        name: selectedTeam !== '0' ? 'Response Rate' : 'No Response Rate',
+        value: selectedTeam !== '0' ? currentSurveyTeamResponseRate : 0,
+        color: '#2196F3',
+      },
+      {
+        name: topScoreCategory.length > 0 && selectedTeam !== '0' ? topScoreCategory[0].category : 'No Top Score',
+        value: topScoreCategory.length > 0 && selectedTeam !== '0' ? topScoreCategory[0].score : 0,
+        color: '#4CAF50',
+      },
+      {
+        name: lowScoreCategory.length > 0 && selectedTeam !== '0' ? lowScoreCategory[0].category : 'No Low Score',
+        value: lowScoreCategory.length > 0 && selectedTeam !== '0' ? lowScoreCategory[0].score : 0,
+        color: '#FF7043',
+      },
+    ],
+    [selectedTeam, currentSurveyTeamResponseRate, topScoreCategory, lowScoreCategory]
+  );
+
+  // Fetch Surveys
   useEffect(() => {
     const fetchSurveys = async () => {
       try {
@@ -67,194 +124,161 @@ export default function ReportsDashboard() {
     };
 
     fetchSurveys();
-  }, [apiUrl]);
+  }, []);
 
-  // Determine current survey ID
-  const paramSurveyId = searchParams.get('surveyId');
-  const defaultSurveyId = surveys.length > 0 ? surveys[0].id : null;
-  const currentSurveyId = paramSurveyId ? Number(paramSurveyId) : defaultSurveyId;
 
-  // Find the current survey
-  const currentSurvey = surveys.find((s) => s.id === currentSurveyId);
-
-  // Fetch and calculate report data when survey or team changes
+  // Fetch Report Data
   useEffect(() => {
     const calculateReportData = async () => {
-      if (currentSurveyId) {
-        try {
-          const response = await fetch(`${apiUrl}/api/reports`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ survey_id: currentSurveyId })
-          });
-          if (!response.ok) {
-            throw new Error(`Error in calculateTeamReportData: ${response.statusText}`);
-          }
-          const result = await response.json();
-          const newData: CategoryScore[] = [];
+      if (!currentSurveyId || selectedTeam === '0') return;
 
-          if (selectedTeam !== '0') {
-            const topScoreCategoryTemp: { category: string | number; score: number }[] = [];
-            const lowScoreCategoryTemp: { category: string | number; score: number }[] = [];
-
-            for (const team_category_scores of result.category_scores) {
-              if (team_category_scores.teamId === selectedTeam) {
-                const scores = team_category_scores.scores.results;
-
-                for (const score of scores) {
-                  if (score.top_score) {
-                    topScoreCategoryTemp.push({
-                      category: 'Be Proud of: ' + score.category_name,
-                      score: score.score
-                    });
-                  }
-
-                  if (score.low_score) {
-                    lowScoreCategoryTemp.push({
-                      category: 'Keep Eye on: ' + score.category_name,
-                      score: score.score
-                    });
-                  }
-
-                  newData.push({
-                    category: score.category_name,
-                    score: score.score,
-                    advice: score.advice,
-                    adviceColor: score.adviceColor
-                  });
-                }
-                setLowScoreCategory(lowScoreCategoryTemp);
-                setTopScoreCategory(topScoreCategoryTemp);
-                break;
-              }
-            }
-            setCategoryScoreData(newData);
-            //console.log('newData', newData);
-          }
-        } catch (error) {
-          console.error('Failed to calculate team report data:', error);
+      try {
+        const response = await fetch(`${apiUrl}/api/reports`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ survey_id: currentSurveyId }),
+        });
+        if (!response.ok) {
+          throw new Error(`Error fetching report data: ${response.statusText}`);
         }
+        const result = await response.json();
+
+        const categoryScores: CategoryScore[] = [];
+        const topScores: CategoryScore[] = [];
+        const lowScores: CategoryScore[] = [];
+        console.log('calculateReportData results',result);
+
+        result.category_scores.forEach((teamCategoryScores: any) => {
+          if (teamCategoryScores.teamId === selectedTeam) {
+            teamCategoryScores.scores.results.forEach((score: any) => {
+              if (score.top_score) {
+                topScores.push({
+                  category: `Be Proud of: ${score.category_name}`,
+                  score: score.score,
+                  advice: score.advice,
+                  adviceColor: score.adviceColor,
+                });
+              }
+              if (score.low_score) {
+                lowScores.push({
+                  category: `Keep Eye on: ${score.category_name}`,
+                  score: score.score,
+                  advice: score.advice,
+                  adviceColor: score.adviceColor,
+                });
+              }
+              categoryScores.push({
+                category_id : score.category_id,
+                category: score.category_name,
+                score: score.score,
+                advice: score.advice,
+                adviceColor: score.adviceColor,
+              });
+            });
+          }
+        });
+
+        setCategoryScoreData(categoryScores);
+        setLowScoreCategory(lowScores);
+        setTopScoreCategory(topScores);
+      } catch (error) {
+        console.error('Failed to fetch report data:', error);
       }
     };
 
-    if (currentSurveyId) {
-      calculateReportData();
+    calculateReportData();
+  }, [currentSurveyId, selectedTeam]);
+
+// Fetch Categories and Questions with survey_id and team_id as parameters
+useEffect(() => {
+  const fetchCategoriesAndQuestions = async () => {
+    if (!currentSurveyId || selectedTeam === '0') {
+      console.log('Invalid survey or team selection');
+      return;
     }
-  }, [currentSurveyId, apiUrl, selectedTeam]);
 
-  // Handle survey selection
-  const handleSurveyClick = (surveyId: number) => {
-    navigate(`?surveyId=${surveyId}`);
-  };
-
-  // Extract unique team names and IDs
-  const uniqueTeamNames = currentSurvey ? Array.from(new Set(currentSurvey.teamNames)) : [];
-  const uniqueTeamIds = currentSurvey ? Array.from(new Set(currentSurvey.teamIds)) : [];
-  const adjustedTeam = selectedTeam === "0" ? uniqueTeamIds[0] : selectedTeam;
-  const selectedTeamIndex = uniqueTeamIds.indexOf(adjustedTeam);
-  const selectedTeamName = selectedTeam === "0" ? " " : uniqueTeamNames[selectedTeamIndex];
-
-  // Handle bar click to select category
-  const handleBarClick = (data: CategoryScore) => {
-    setSelectedCategory(data.category as string);
-  };
-
-  // Find the data for the selected category
-  const selectedCategoryData = categoryScoreData.find((data) => data.category === selectedCategory);
-
-  // Calculate current survey team response rate
-  const currentSurveyTeamResponseRate = currentSurvey?.responseRates && selectedTeamIndex < currentSurvey.responseRates.length
-    ? currentSurvey.responseRates[selectedTeamIndex]
-    : 0;
-
-  // Prepare survey overview data
-  const surveyOverview = [
-    { name: selectedTeam > 0 ? 'Response Rate' : 'No Response Rate', value: selectedTeam > 0 ? currentSurveyTeamResponseRate : 0, color: '#2196F3' },
-    {
-
-      name: topScoreCategory.length > 0 && selectedTeam > 0 ? topScoreCategory[0].category : 'No Top Score',
-      value: topScoreCategory.length > 0 && selectedTeam > 0 ? topScoreCategory[0].score : 0,
-      color: '#4CAF50'
-    },
-    {
-      name: lowScoreCategory.length > 0 && selectedTeam > 0 ? lowScoreCategory[0].category : 'No Low Score',
-      value: lowScoreCategory.length > 0 && selectedTeam > 0 ? lowScoreCategory[0].score : 0,
-      color: '#FF7043'
-    }
-  ];
-  const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
-
-  // Function to handle legend clicks in the Trend chart
-  const handleLegendClick = (e) => {
-    const categoryName = e.dataKey;
-    setHiddenCategories((prevHidden) =>
-      prevHidden.includes(categoryName)
-        ? prevHidden.filter((cat) => cat !== categoryName) // Remove from hidden
-        : [...prevHidden, categoryName] // Add to hidden
-    );
-  };
-  
-  /// get the trend data ////
-  async function fetchCategoryTrendData(apiUrl, selectedTeam) {
     try {
-      // Fetch data from the API
-      const response = await fetch(`${apiUrl}/api/report/${selectedTeam}`);
+      console.log(`Fetching questions for survey_id: ${currentSurveyId}, team_id: ${selectedTeam}`);
+
+      const response = await fetch(`${apiUrl}/api/getQuestions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          survey_id: currentSurveyId,
+          team_id: selectedTeam,
+        }), // Pass survey_id and team_id in the body
+      });
+      
       if (!response.ok) {
-        throw new Error(`Error fetching data: ${response.statusText}`);
+        throw new Error(`Error fetching categories: ${response.statusText}`);
       }
 
-      const apiData = await response.json();
+      const data: CategoryQuestions[] = await response.json();
+      console.log('Fetched questions data:', data); // Debug log for API response
 
-      // Filter surveys to include only those with responses
-      const filteredData = apiData.filter(
-        (survey) => Array.isArray(survey.results) && survey.results.length > 0
-      );
-
-      // Construct the data array
-      const surveyData = filteredData.map((survey) => {
-        const row = { survey: survey.Survey }; // Start each row with the survey name
-
-        survey.results.forEach((result) => {
-          row[result.category_name] = result.average; // Add each category as a key
-        });
-
-        return row;
-      });
-
-      console.log("Constructed Trend Data:", surveyData);
-      return surveyData;
+      //setSelectedCategory("1");
+      setCategoryQuestions(data); // Update state with the fetched data
     } catch (error) {
-      console.error("Error constructing Trend data:", error);
-      return [];
+      console.error('Failed to fetch categories and questions:', error);
     }
-  }
+  };
 
-  // Inside the component
-  const [categoriesTrend, setCategoriesTrend] = useState([]); // Use state to store categoriesTrend
+  fetchCategoriesAndQuestions();
+}, [currentSurveyId, selectedTeam]); // Re-run whenever currentSurveyId or selectedTeam changes
 
+  //////////// Fetch Trend Data
   useEffect(() => {
-    if (selectedTeam !== "0") {
-      fetchCategoryTrendData(apiUrl, selectedTeam)
-        .then((result) => {
-          setCategoriesTrend(result); // Update state with fetched data
-          console.log("categoriesTrend:", result);
-        })
-        .catch((error) => {
-          console.error("Failed to fetch and construct categoriesTrend:", error);
-        });
-    }
-  }, [apiUrl, selectedTeam]); // Re-fetch data whenever `selectedTeam` changes
+    const fetchTrendData = async () => {
+      if (selectedTeam === '0') return;
 
-  console.log("categoriesTrend:", categoriesTrend);
+      try {
+        const response = await fetch(`${apiUrl}/api/report/${selectedTeam}`);
+        if (!response.ok) {
+          throw new Error(`Error fetching trend data: ${response.statusText}`);
+        }
+        const apiData = await response.json();
 
-  
+        const trendData: TrendData[] = apiData
+          .filter((survey: any) => Array.isArray(survey.results) && survey.results.length > 0)
+          .map((survey: any) => {
+            const row: TrendData = { survey: survey.Survey };
+            survey.results.forEach((result: any) => {
+              row[result.category_name] = result.average;
+            });
+            return row;
+          });
 
+        setCategoriesTrend(trendData);
+      } catch (error) {
+        console.error('Failed to fetch trend data:', error);
+      }
+    };
+
+    fetchTrendData();
+  }, [selectedTeam]);
+
+  const handleSurveyClick = useCallback(
+    (surveyId: number) => {
+      navigate(`?surveyId=${surveyId}`);
+    },
+    [navigate]
+  );
+
+  const handleLegendClick = (e: any) => {
+    const categoryName = e.dataKey;
+    setHiddenCategories((prev) =>
+      prev.includes(categoryName)
+        ? prev.filter((category) => category !== categoryName)
+        : [...prev, categoryName]
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <div className="text-sm text-gray-600 p-2 border-b">
         <h1 className="text-2xl font-semibold mb-6">
           {currentSurvey ? `Overall Report for ${currentSurvey.name}` : 'No Selected Survey'}
@@ -262,38 +286,32 @@ export default function ReportsDashboard() {
       </div>
 
       <div className="flex min-h-[calc(100vh-112px)]">
-        {/* Sidebar */}
         <div className="w-64 border-r bg-white p-6">
-
           <div className="text-xl font-semibold mb-4">Survey List</div>
           <div className="space-y-2">
-            {surveys.length === 0 ? (
-              <div>No surveys available</div>
-            ) : (
-              surveys.map((survey) => (
-                <button
-                  key={survey.id}
-                  onClick={() => handleSurveyClick(survey.id)}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-50 ${currentSurveyId === survey.id ? 'bg-gray-200' : ''
-                    }`}
-                >
-                  {survey.name}
-                </button>
-              ))
-            )}
+            {surveys.map((survey) => (
+              <button
+                key={survey.id}
+                onClick={() => handleSurveyClick(survey.id)}
+                className={`w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-50 ${
+                  currentSurveyId === survey.id ? 'bg-gray-200' : ''
+                }`}
+              >
+                {survey.name}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Main Content Area */}
         <div className="flex-1 p-6">
-          {/* Team Selection */}
           <div className="flex justify-end mb-8">
             <Select
               onValueChange={(value) => {
                 setSelectedTeam(value);
                 setSelectedCategory(null); // Reset selected category when team changes
               }}
-              defaultValue="0">
+              defaultValue="0"
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select a team" />
               </SelectTrigger>
@@ -311,12 +329,10 @@ export default function ReportsDashboard() {
             </Select>
           </div>
 
-          {/* Report Title */}
           <div className="text-xl font-semibold mb-4">
             Team {selectedTeamName} Self Assessment Survey Report
           </div>
 
-          {/* Charts and Recommendations */}
           <div className="space-y-6">
             {/* Survey Overview Card */}
             <Card>
@@ -356,8 +372,8 @@ export default function ReportsDashboard() {
                 })}
               </CardContent>
             </Card>
-
-            {/* Grid with Team Scores and Conditional Credit Rating/Category Advice */}
+          </div>
+          {/* Grid with Team Scores and Conditional Credit Rating/Category Advice */}
             <div className="grid md:grid-cols-2 gap-6">
               {/* Team Scores Card */}
               <Card>
@@ -431,7 +447,7 @@ export default function ReportsDashboard() {
                           }`}
                       >
 
-                        <div style={{ fontSize: '16px', color: 'black', fontWeight: '500', Bold }}>{selectedCategory.category}</div>
+                        <div style={{ fontSize: '16px', color: 'black', fontWeight: '500' }}>{selectedCategory.category}</div>
                         <div className="text-sm text-gray-700 mt-2"> {selectedCategory.advice}</div>
                       </div>
                     ) : (
@@ -443,7 +459,7 @@ export default function ReportsDashboard() {
                                 'bg-gray-50' // Default color
                             }`}
                         >
-                          <div style={{ fontSize: '16px', color: 'black', fontWeight: '500', Bold }}>
+                          <div style={{ fontSize: '16px', color: 'black', fontWeight: '500'}}>
                             {categoryScoreData[0].category}
                           </div>
                           <div className="text-sm text-gray-700 mt-2">
@@ -457,9 +473,9 @@ export default function ReportsDashboard() {
               )}
 
             </div>
-            {/* Category Questions Card */}
+             {/* Category Questions Card */}
 
-            {selectedTeam === "0" ?
+             {selectedTeam === "0" ?
               (
 
                 <Card>
@@ -474,42 +490,49 @@ export default function ReportsDashboard() {
                 </Card>
               ) : (<Card>
                 <CardHeader>
-                  <CardTitle>Category XYZ Questions (WORK IN PROGRESS)</CardTitle>
+                <CardTitle> {selectedCategory? `Category ${selectedCategory.category} Questions`: categoryScoreData.length > 0 ? `Category ${categoryScoreData[0].category} Questions `:"Category Questions" }</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center text-gray-600 text-sm">
-                    {selectedCategory ? (
-                      <div
-                        className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white"
-                      >
-                        <div className="text-center text-gray-600 text-sm">
-                          Q1 : When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
-                        </div>
-                        <div className="text-sm text-gray-700 text-left">
-                          {selectedCategory.score}
-                        </div>
-                      </div>
-                    ) : (
-                      categoryScoreData.length > 0 && (
-                        <div
-                          className="grid grid-cols-[auto_auto] gap-4 p-4 rounded-lg shadow-md bg-white"
-                        >
-                          <div className="text-center text-gray-600 text-sm">
-                            Q2 : When conflict occurs, my teammates confront and deal with the issue before moving to another subject.
-                          </div>
-                          <div className="text-sm text-gray-700 text-left">
-                            {categoryScoreData[0].score}
-                          </div>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </CardContent>
+  <div className="text-gray-600 text-sm w-full">
+    {categoryQuestions.length > 0 && (selectedCategory || categoryScoreData.length > 0) ? (
+      categoryQuestions
+        .filter((category) =>
+          selectedCategory
+            ? category.category_id === selectedCategory.category_id
+            : category.category_id === categoryScoreData[0]?.category_id
+        )
+        .map((category) => (
+          <div
+            key={category.category_id}
+            className="w-full p-4 rounded-lg shadow-md bg-white"
+          >
+            <ul className="mt-2 space-y-2 text-left w-full">
+              {category.questions.map((question, index) => (
+                <li key={question.question_id} className="grid grid-cols-[3fr_1fr] gap-4 items-center w-full">
+                  <span>
+                    {index + 1}. {question.question}
+                  </span>
+                  <span className="font-semibold text-gray-700 text-right">
+                    Score: "{question.Score}"
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+    ) : (
+      <span>No data available</span>
+    )}
+  </div>
+</CardContent>
+
               </Card>
 
               )}
+              {/* Category Trend Card */}
 
-            {/* Category Trend Card */}
+             
+
 {selectedTeam === "0" ? (
   <Card>
     <CardHeader>
@@ -567,9 +590,7 @@ export default function ReportsDashboard() {
   </Card>
 )}
 
-         
 
-          </div>
         </div>
       </div>
     </div>

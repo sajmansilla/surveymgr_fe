@@ -8,7 +8,7 @@ import AddCategories from '@/components/AddCategories';
 import AddQuestions from '@/components/AddQuestions';
 import CreateSurvey from '@/components/CreateSurvey';
 import {ReportsDashboard} from '@/components/reports';
-import{ReportsDashboardNew} from '@/components/reports';
+import{ReportsDashboardOld} from '@/components/reports';
 import { ViewSurvey } from '@/components/viewsurvey';
 import TeamGaiaSurvey from '@/components/app_survey';
 import Header from '@/components/Header';
@@ -44,7 +44,7 @@ function App() {
           <Route path="/questions" element={<AddQuestions />} />
           <Route path="/create-survey" element={<CreateSurvey />} />
           <Route path="/reports" element={<ReportsDashboard />} />
-          <Route path="/reportsNew" element={<ReportsDashboardNew/>} />
+          <Route path="/reportsOld" element={<ReportsDashboardOld/>} />
           <Route path="/reports/:survey_id" element={<ReportsDashboard />} />
           <Route path="/view-survey/:survey_id" element={<ViewSurvey />} />
           <Route path="/team-gaia-survey" element={<TeamGaiaSurvey />} />
