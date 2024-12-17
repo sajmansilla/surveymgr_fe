@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import {PieChart,Pie,Cell,BarChart,Bar,XAxis,YAxis,ResponsiveContainer,Tooltip,ReferenceLine,Label,LineChart,Line,Legend,} from 'recharts';
@@ -31,8 +31,11 @@ interface CategoryScore {
   adviceColor: string;
 }
 interface CategoryQuestions {
+  category_name: ReactNode;
   category_id: number;
-  questions: { question_id: number; question: string; score: number }[];
+  questions: {
+    Score: any; question_id: number; question: string; score: number ;calc_method:string
+}[];
 }
 interface TrendData {
   survey: string;
@@ -148,7 +151,7 @@ export default function ReportsDashboardNew() {
         const categoryScores: CategoryScore[] = [];
         const topScores: CategoryScore[] = [];
         const lowScores: CategoryScore[] = [];
-        console.log('calculateReportData results',result);
+        //console.log('calculateReportData results',result);
 
         result.category_scores.forEach((teamCategoryScores: any) => {
           if (teamCategoryScores.teamId === selectedTeam) {
@@ -159,6 +162,7 @@ export default function ReportsDashboardNew() {
                   score: score.score,
                   advice: score.advice,
                   adviceColor: score.adviceColor,
+                  category_id: score.category_id,
                 });
               }
               if (score.low_score) {
@@ -167,6 +171,7 @@ export default function ReportsDashboardNew() {
                   score: score.score,
                   advice: score.advice,
                   adviceColor: score.adviceColor,
+                  category_id: score.category_id,
                 });
               }
               categoryScores.push({
@@ -200,7 +205,7 @@ useEffect(() => {
     }
 
     try {
-      console.log(`Fetching questions for survey_id: ${currentSurveyId}, team_id: ${selectedTeam}`);
+      //console.log(`Fetching questions for survey_id: ${currentSurveyId}, team_id: ${selectedTeam}`);
 
       const response = await fetch(`${apiUrl}/api/getQuestions`, {
         method: 'POST',
@@ -218,7 +223,7 @@ useEffect(() => {
       }
 
       const data: CategoryQuestions[] = await response.json();
-      console.log('Fetched questions data:', data); // Debug log for API response
+      //console.log('Fetched questions data:', data); // Debug log for API response
 
       //setSelectedCategory("1");
       setCategoryQuestions(data); // Update state with the fetched data
@@ -404,7 +409,7 @@ useEffect(() => {
                           onClick={(data) => {
                             setSelectedCategory(data);
                           }}
-                          shape={(props) => {
+                          shape={(props: { payload?: any; x?: any; y?: any; width?: any; height?: any; }) => {
                             const { x, y, width, height } = props;
                             const barColor =
                               props.payload.adviceColor === 'green' ? '#4CAF50' :
@@ -473,7 +478,7 @@ useEffect(() => {
               )}
 
             </div>
-             {/* Category Questions Card */}
+{/* Category Numeric Questions Card */}
 
              {selectedTeam === "0" ?
               (
@@ -490,7 +495,7 @@ useEffect(() => {
                 </Card>
               ) : (<Card>
                 <CardHeader>
-                <CardTitle> {selectedCategory? `Category ${selectedCategory.category} Questions`: categoryScoreData.length > 0 ? `Category ${categoryScoreData[0].category} Questions `:"Category Questions" }</CardTitle>
+                <CardTitle> {selectedCategory? `Category" ${selectedCategory.category} "Questions`: categoryScoreData.length > 0 ? `Category "${categoryScoreData[0].category} " Questions `:"Category Questions" }</CardTitle>
                 </CardHeader>
                 <CardContent>
   <div className="text-gray-600 text-sm w-full">
@@ -503,11 +508,11 @@ useEffect(() => {
         )
         .map((category) => (
           <div
-            key={category.category_id}
+            key={category.index}
             className="w-full p-4 rounded-lg shadow-md bg-white"
           >
-            <ul className="mt-2 space-y-2 text-left w-full">
-              {category.questions.map((question, index) => (
+            <ul key={category.index}  className="mt-2 space-y-2 text-left w-full">
+              {category.questions.filter((question) => question.calc_method == "Avg").map((question, index) => (
                 <li key={question.question_id} className="grid grid-cols-[3fr_1fr] gap-4 items-center w-full">
                   <span>
                     {index + 1}. {question.question}
@@ -529,7 +534,9 @@ useEffect(() => {
               </Card>
 
               )}
-              {/* Category Trend Card */}
+ 
+
+{/* Category Trend Card */}
 
              
 
@@ -590,7 +597,46 @@ useEffect(() => {
   </Card>
 )}
 
+            
+{/* Category Non Numeric Questions Card */}
+{selectedTeam !== "0" && categoryQuestions.length > 0 ? (
+  categoryQuestions.map((category) => {
+    const aggregateQuestions = category.questions.filter(
+      (question) => question.calc_method === "Aggregate"
+    );
+    return aggregateQuestions.length > 0 ? (
+       <Card key={category.category_id} className="mb-6">
+        {/* Card Header: Centered Category Name */}
+        <CardHeader className="text-center">
+          <CardTitle className="text-lg">{category.category_name}</CardTitle>
+        </CardHeader>
 
+        {/* Card Content: Questions and Scores */}
+        <CardContent>
+          <div className="w-full p-4 rounded-lg shadow-md bg-white">
+            {aggregateQuestions.map((question, index) => (
+              <div key={question.question_id} className="w-full">
+                {/* Question Row */}
+                <div className="text-left text-blue-600 mb-1">
+                  {index + 1}. {question.question}
+                </div>
+                {/* Answer/Score Row: Replace \n with new lines */}
+                <div className="text-left text-gray-700">
+                  {question.Score.split("\n").map((line: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined, idx: React.Key | null | undefined) => (
+                    <div key={idx}>{line}</div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    ) : null;
+  })
+) : (
+  <div className="text-center text-gray-600 text-sm">
+  </div>
+)}
         </div>
       </div>
     </div>
