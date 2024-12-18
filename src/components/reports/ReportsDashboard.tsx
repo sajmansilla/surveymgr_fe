@@ -43,7 +43,7 @@ interface TrendData {
 }
 
 // Component
-export default function ReportsDashboardNew() {
+export default function ReportsDashboard() {
   // State Variables
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>('0');
