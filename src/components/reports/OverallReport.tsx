@@ -2,39 +2,12 @@
 
 import React, { useEffect, useState, useMemo, useCallback, ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Tooltip,
-  ReferenceLine,
-  Label,
-  LineChart,
-  Line,
-  Legend,
-} from 'recharts';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import {Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import {PieChart,Pie,Cell,BarChart,Bar,XAxis,YAxis,ResponsiveContainer,Tooltip,ReferenceLine,Label,LineChart,Line,Legend,} from 'recharts';
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from '@/components/ui/select';
 
 // API Base URL
 const apiUrl = import.meta.env.VITE_API_URL;
-//let test =0;
 
 // Interfaces
 interface Survey {
@@ -56,43 +29,36 @@ interface CategoryScore {
   score: number;
   advice: string;
   adviceColor: string;
-  lowScore : Boolean;
-  topScore : Boolean;
 }
-
 interface CategoryQuestions {
   category_name: ReactNode;
   category_id: number;
   questions: {
-    Score: string;
-    question_id: number;
-    question: string;
-    calc_method: string;
-  }[];
+    Score: any; question_id: number; question: string; score: number ;calc_method:string
+}[];
 }
-
 interface TrendData {
   survey: string;
   [category: string]: string | number;
 }
 
 // Component
-export default function ReportsDashboard() {
+export default function OverallReport() {
   // State Variables
-  //test =test+1;
-  //console.log('test',test);
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>('0');
   const [categoryScoreData, setCategoryScoreData] = useState<CategoryScore[]>([]);
-  const [categoryQuestions, setCategoryQuestions] = useState<CategoryQuestions[]>([]);
+  const [lowScoreCategory, setLowScoreCategory] = useState<CategoryScore[]>([]);
+  const [topScoreCategory, setTopScoreCategory] = useState<CategoryScore[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoriesTrend, setCategoriesTrend] = useState<TrendData[]>([]);
   const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
+  const [categoryQuestions, setCategoryQuestions] = useState<CategoryQuestions[]>([]); 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const paramSurveyId = searchParams.get('surveyId');
-  const paramSelectedTeamId = searchParams.get('teamId');
 
+  // Derived Values
+  const paramSurveyId = searchParams.get('surveyId');
   const currentSurveyId = useMemo(() => {
     const defaultId = surveys.length > 0 ? surveys[0].id : null;
     return paramSurveyId ? Number(paramSurveyId) : defaultId;
@@ -111,17 +77,19 @@ export default function ReportsDashboard() {
     () => (currentSurvey ? Array.from(new Set(currentSurvey.teamIds)) : []),
     [currentSurvey]
   );
+
   const selectedTeamIndex = useMemo(
     () => uniqueTeamIds.indexOf(selectedTeam === '0' ? uniqueTeamIds[0] : selectedTeam),
     [selectedTeam, uniqueTeamIds]
   );
+
   const selectedTeamName = selectedTeam === '0' ? '' : uniqueTeamNames[selectedTeamIndex];
   const currentSurveyTeamResponseRate = useMemo(
     () =>
       currentSurvey?.responseRates?.[selectedTeamIndex] ?? 0,
     [currentSurvey, selectedTeamIndex]
   );
-  
+
   const surveyOverview = useMemo(
     () => [
       {
@@ -130,143 +98,173 @@ export default function ReportsDashboard() {
         color: '#2196F3',
       },
       {
-        name: categoryScoreData.some((category) => category.topScore) && selectedTeam !== '0' ? `Be Proud of: ${categoryScoreData.find((category) => category.topScore)?.category}` : 'No Top Score',
-        value: categoryScoreData.some((category) => category.topScore) && selectedTeam !== '0'  ? categoryScoreData.find((category) => category.topScore)?.score : 0,
+        name: topScoreCategory.length > 0 && selectedTeam !== '0' ? topScoreCategory[0].category : 'No Top Score',
+        value: topScoreCategory.length > 0 && selectedTeam !== '0' ? topScoreCategory[0].score : 0,
         color: '#4CAF50',
-      }
-      ,
+      },
       {
-        name: categoryScoreData.some((category) => category.lowScore) && selectedTeam !== '0' ? `Keep Eye on: ${categoryScoreData.find((category) => category.lowScore)?.category}`: 'No Low Score',
-        value: categoryScoreData.some((category) => category.lowScore) && selectedTeam !== '0' ? categoryScoreData.find((category) => category.lowScore)?.score  : 0,
+        name: lowScoreCategory.length > 0 && selectedTeam !== '0' ? lowScoreCategory[0].category : 'No Low Score',
+        value: lowScoreCategory.length > 0 && selectedTeam !== '0' ? lowScoreCategory[0].score : 0,
         color: '#FF7043',
-        
       },
     ],
-    [selectedTeam, currentSurveyTeamResponseRate,categoryScoreData]
+    [selectedTeam, currentSurveyTeamResponseRate, topScoreCategory, lowScoreCategory]
   );
 
-  useEffect(() => {
-    if (paramSelectedTeamId) {
-      setSelectedTeam(paramSelectedTeamId);
-    }
-  }, [paramSelectedTeamId]);
-
-  // Fetch Surveys (Only Once)
+  // Fetch Surveys
   useEffect(() => {
     const fetchSurveys = async () => {
       try {
         const response = await fetch(`${apiUrl}/api/survey-dashboard`);
-        if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Error fetching surveys: ${response.statusText}`);
+        }
         const data = await response.json();
         setSurveys(data.surveys || []);
       } catch (error) {
         console.error('Failed to fetch surveys:', error);
       }
     };
+
     fetchSurveys();
   }, []);
 
+
   // Fetch Report Data
   useEffect(() => {
-    if (!currentSurveyId || selectedTeam === '0') return;
+    const calculateReportData = async () => {
+      if (!currentSurveyId || selectedTeam === '0') return;
 
-    const fetchReportData = async () => {
       try {
         const response = await fetch(`${apiUrl}/api/reports`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({ survey_id: currentSurveyId }),
         });
-        if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Error fetching report data: ${response.statusText}`);
+        }
         const result = await response.json();
-        const categoryScores: CategoryScore[] = result.category_scores.flatMap(
-          (teamCategoryScores: any) =>
-            teamCategoryScores.teamId === selectedTeam
-              ? teamCategoryScores.scores.results.map((score: any) => ({
-                  category_id: score.category_id,
-                  category: score.category_name, 
+
+        const categoryScores: CategoryScore[] = [];
+        const topScores: CategoryScore[] = [];
+        const lowScores: CategoryScore[] = [];
+        //console.log('calculateReportData results',result);
+
+        result.category_scores.forEach((teamCategoryScores: any) => {
+          if (teamCategoryScores.teamId === selectedTeam) {
+            teamCategoryScores.scores.results.forEach((score: any) => {
+              if (score.top_score) {
+                topScores.push({
+                  category: `Be Proud of: ${score.category_name}`,
                   score: score.score,
                   advice: score.advice,
                   adviceColor: score.adviceColor,
-                  topScore: score.top_score? true: false,
-                  lowScore: score.low_score? true: false,
-                }))
-              : []
-        );
-        
+                  category_id: score.category_id,
+                });
+              }
+              if (score.low_score) {
+                lowScores.push({
+                  category: `Keep Eye on: ${score.category_name}`,
+                  score: score.score,
+                  advice: score.advice,
+                  adviceColor: score.adviceColor,
+                  category_id: score.category_id,
+                });
+              }
+              categoryScores.push({
+                category_id : score.category_id,
+                category: score.category_name,
+                score: score.score,
+                advice: score.advice,
+                adviceColor: score.adviceColor,
+              });
+            });
+          }
+        });
 
         setCategoryScoreData(categoryScores);
-        
+        setLowScoreCategory(lowScores);
+        setTopScoreCategory(topScores);
       } catch (error) {
         console.error('Failed to fetch report data:', error);
       }
     };
 
-    fetchReportData();
+    calculateReportData();
   }, [currentSurveyId, selectedTeam]);
 
-  // Fetch Categories and Questions
-  useEffect(() => {
-    if (!currentSurveyId || selectedTeam === '0') return;
-
-    const fetchCategoriesAndQuestions = async () => {
-      try {
-        const response = await fetch(`${apiUrl}/api/getQuestions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            survey_id: currentSurveyId,
-            team_id: selectedTeam,
-          }),
-        });
-        if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-        const data: CategoryQuestions[] = await response.json();
-        setCategoryQuestions(data);
-      } catch (error) {
-        console.error('Failed to fetch categories and questions:', error);
-      }
-    };
-
-    fetchCategoriesAndQuestions();
-  }, [currentSurveyId, selectedTeam]);
-
-  // Fetch Trend Data
+// Fetch Categories and Questions with survey_id and team_id as parameters
 useEffect(() => {
-  if (selectedTeam === '0') return; // Ensure selectedTeam is not "0"
-  if (!currentSurvey || !currentSurvey.teamIds.includes(selectedTeam)) {
-    //console.log("not in the list");
-    setCategoriesTrend([null]);
-    return; // Exit if selectedTeam is not in the list
-  }
+  const fetchCategoriesAndQuestions = async () => {
+    if (!currentSurveyId || selectedTeam === '0') {
+      console.log('Invalid survey or team selection');
+      return;
+    }
 
- // console.log("selectedTeam:", selectedTeam);
-  //console.log("currentSurvey:", currentSurvey);
-
-  const fetchTrendData = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/report/${selectedTeam}`);
-      if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+      //console.log(`Fetching questions for survey_id: ${currentSurveyId}, team_id: ${selectedTeam}`);
 
-      const apiData = await response.json();
+      const response = await fetch(`${apiUrl}/api/getQuestions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          survey_id: currentSurveyId,
+          team_id: selectedTeam,
+        }), // Pass survey_id and team_id in the body
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching categories: ${response.statusText}`);
+      }
 
-      const trendData: TrendData[] = apiData
-        .filter((survey: any) => Array.isArray(survey.results) && survey.results.length > 0)
-        .map((survey: any) => {
-          const row: TrendData = { survey: survey.Survey };
-          survey.results.forEach((result: any) => {
-            row[result.category_name] = result.average;
-          });
-          return row;
-        });
+      const data: CategoryQuestions[] = await response.json();
+      //console.log('Fetched questions data:', data); // Debug log for API response
 
-      setCategoriesTrend(trendData);
+      //setSelectedCategory("1");
+      setCategoryQuestions(data); // Update state with the fetched data
     } catch (error) {
-      console.error("Failed to fetch trend data:", error);
+      console.error('Failed to fetch categories and questions:', error);
     }
   };
 
-  fetchTrendData();
-}, [selectedTeam, currentSurvey]); // Ensure dependencies include currentSurvey
+  fetchCategoriesAndQuestions();
+}, [currentSurveyId, selectedTeam]); // Re-run whenever currentSurveyId or selectedTeam changes
+
+  //////////// Fetch Trend Data
+  useEffect(() => {
+    const fetchTrendData = async () => {
+      if (selectedTeam === '0') return;
+
+      try {
+        const response = await fetch(`${apiUrl}/api/report/${selectedTeam}`);
+        if (!response.ok) {
+          throw new Error(`Error fetching trend data: ${response.statusText}`);
+        }
+        const apiData = await response.json();
+
+        const trendData: TrendData[] = apiData
+          .filter((survey: any) => Array.isArray(survey.results) && survey.results.length > 0)
+          .map((survey: any) => {
+            const row: TrendData = { survey: survey.Survey };
+            survey.results.forEach((result: any) => {
+              row[result.category_name] = result.average;
+            });
+            return row;
+          });
+
+        setCategoriesTrend(trendData);
+      } catch (error) {
+        console.error('Failed to fetch trend data:', error);
+      }
+    };
+
+    fetchTrendData();
+  }, [selectedTeam]);
 
   const handleSurveyClick = useCallback(
     (surveyId: number) => {
@@ -283,10 +281,6 @@ useEffect(() => {
         : [...prev, categoryName]
     );
   };
-
-  
-
-  //////////////////////////////
 
   return (
     <div className="min-h-screen bg-white">
@@ -318,23 +312,23 @@ useEffect(() => {
   <div className="flex justify-end mb-8">
     <Select
       onValueChange={(value) => {
-        if (value === "overallReport") {
-          // Redirect to overall report with currentSurveyId
-          navigate(`/reports/overallReport?surveyId=${currentSurveyId}`);
+        if (value === "0") {
+          // Handle "Overall Report" default option (no action needed for default)
+          setSelectedTeam("0");
+          setSelectedCategory(null);
         } else {
-          setSelectedTeam(value);
-          setSelectedCategory(null); // Reset selected category when team changes
+          // Redirect to /reports with selectedTeam parameter
+          navigate(`/reports?teamId=${value}&surveyId=${currentSurveyId}`);
         }
       }}
       defaultValue="0"
     >
       <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Select Option" />
+        <SelectValue placeholder="Overall Report" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="0">Select Option</SelectItem>
-        {/* Overall Report Option */}
-        <SelectItem value="overallReport">Overall Report</SelectItem>
+        {/* Default Overall Report Option */}
+        <SelectItem value="0">Overall Report</SelectItem>
         {/* Dynamic Team Report Options */}
         {uniqueTeamNames.map((teamName, index) => (
           <SelectItem
@@ -349,8 +343,9 @@ useEffect(() => {
   </div>
 
 
+
           <div className="text-xl font-semibold mb-4">
-            Team {selectedTeamName} Self Assessment Survey Report
+            Overall Survey  Report new  heere 
           </div>
 
           <div className="space-y-6">
@@ -360,9 +355,7 @@ useEffect(() => {
                 <CardTitle>Survey Overview</CardTitle>
               </CardHeader>
               <CardContent className="flex justify-around h-[200px]">
-                {
-                
-                surveyOverview.map((data, index) => {
+                {surveyOverview.map((data, index) => {
                   const numericDrawValue = index === 0 ? data.value : (data.value / 5) * 100;
                   const displayValue = index === 0 ? `${data.value}%` : `${data.value}`;
                   const chartData = [
@@ -398,29 +391,18 @@ useEffect(() => {
           {/* Grid with Team Scores and Conditional Credit Rating/Category Advice */}
             <div className="grid md:grid-cols-2 gap-6">
               {/* Team Scores Card */}
-
-              {selectedTeam === "0"  || categoryScoreData.length <= 0 ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>Team Scores </CardTitle>
+                  <CardTitle>Team Scores</CardTitle>
                 </CardHeader>
 
                 <CardContent>
-                 
+                  {selectedTeam === "0" ? (
                     <div className="text-center text-gray-600 text-sm">
                       No team selected. Please select a team to view the scores.
                     </div>
-             </CardContent>
-             </Card>
                   ) : (
-                    <Card>
-                    <CardHeader>
-                      <CardTitle>Team Scores </CardTitle>
-                    </CardHeader>
-    
-                    <CardContent>
                     <ResponsiveContainer width="100%" height={200}>
-                    
                       <BarChart
                         data={categoryScoreData}
                         layout="vertical"
@@ -449,12 +431,12 @@ useEffect(() => {
                         />
                       </BarChart>
                     </ResponsiveContainer>
-                  
+                  )}
                 </CardContent>
               </Card>
-)}
+
               {/* Conditional Rendering: Category Recommendations */}
-              {selectedTeam === "0" || categoryScoreData.length <= 0 ? (
+              {selectedTeam === "0" ? (
                 <Card>
                   <CardHeader>
                     <CardTitle>Category Recommendations</CardTitle>
@@ -568,11 +550,10 @@ useEffect(() => {
 
              
 
-{
-selectedTeam === "0" && categoriesTrend.length <= 0? (
+{selectedTeam === "0" ? (
   <Card>
     <CardHeader>
-      <CardTitle>Categories Trend no team  </CardTitle>
+      <CardTitle>Categories Trend</CardTitle>
     </CardHeader>
     <CardContent>
       <div className="text-center text-gray-600 text-sm">
@@ -583,7 +564,7 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
 ) : categoriesTrend.length > 0 && categoriesTrend[0] ? (
   <Card className="w-full">
     <CardHeader>
-      <CardTitle>Categories Trend data ok </CardTitle>
+      <CardTitle>Categories Trend</CardTitle>
     </CardHeader>
     <CardContent className="flex justify-center items-center">
       <ResponsiveContainer width="100%" height={300}>
@@ -642,7 +623,7 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
 
         {/* Card Content: Questions and Scores */}
         <CardContent>
-          <div className="w-full p-4 rounded-lg shadow-md bg-white">
+          <div key="{category.category_id}" className="w-full p-4 rounded-lg shadow-md bg-white">
             {aggregateQuestions.map((question, index) => (
               <div key={question.question_id} className="w-full">
                 {/* Question Row */}
