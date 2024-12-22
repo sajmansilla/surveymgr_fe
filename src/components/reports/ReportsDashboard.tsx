@@ -319,7 +319,6 @@ useEffect(() => {
     <SelectValue  placeholder={`Team ${uniqueTeamNames[uniqueTeamIds.indexOf(Number(selectedTeam))]} Report`}/>
   </SelectTrigger>
   <SelectContent>
-    <SelectItem value="0">Select Option</SelectItem>
     {/* Overall Report Option */}
     <SelectItem value="overallReport" >Overall Report</SelectItem>
     {/* Dynamic Team Report Options */}
