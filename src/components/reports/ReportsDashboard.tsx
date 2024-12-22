@@ -316,7 +316,7 @@ useEffect(() => {
   }}
 >
   <SelectTrigger className="w-[180px]">
-    <SelectValue placeholder="Select Option" />
+    <SelectValue  placeholder={`Team ${uniqueTeamNames[uniqueTeamIds.indexOf(Number(selectedTeam))]} Report`}/>
   </SelectTrigger>
   <SelectContent>
     <SelectItem value="0">Select Option</SelectItem>
@@ -328,7 +328,7 @@ useEffect(() => {
         key={`${currentSurveyId}-${index}`}
         value={uniqueTeamIds[index]}
       >
-        Team {teamName} Report 
+        Team {teamName} Report
       </SelectItem>
     ))}
   </SelectContent>
