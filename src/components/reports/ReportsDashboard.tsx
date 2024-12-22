@@ -2,39 +2,13 @@
 
 import React, { useEffect, useState, useMemo, useCallback, ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Tooltip,
-  ReferenceLine,
-  Label,
-  LineChart,
-  Line,
-  Legend,
-} from 'recharts';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import {Card,CardContent,CardHeader,CardTitle,} from '@/components/ui/card';
+import {PieChart,Pie,Cell,BarChart, Bar,XAxis,YAxis,ResponsiveContainer,Tooltip,ReferenceLine,Label,LineChart,Line,Legend,} from 'recharts';
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from '@/components/ui/select';
 
 // API Base URL
 const apiUrl = import.meta.env.VITE_API_URL;
-//let test =0;
+
 
 // Interfaces
 interface Survey {
@@ -79,8 +53,6 @@ interface TrendData {
 // Component
 export default function ReportsDashboard() {
   // State Variables
-  //test =test+1;
-  //console.log('test',test);
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>('0');
   const [categoryScoreData, setCategoryScoreData] = useState<CategoryScore[]>([]);
@@ -93,10 +65,19 @@ export default function ReportsDashboard() {
   const paramSurveyId = searchParams.get('surveyId');
   const paramSelectedTeamId = searchParams.get('teamId');
 
+  
+
   const currentSurveyId = useMemo(() => {
     const defaultId = surveys.length > 0 ? surveys[0].id : null;
     return paramSurveyId ? Number(paramSurveyId) : defaultId;
   }, [paramSurveyId, surveys]);
+
+  useEffect(() => {
+    if (paramSelectedTeamId) {
+      setSelectedTeam(paramSelectedTeamId);
+    }
+  }, [paramSelectedTeamId,selectedTeam]);
+
 
   const currentSurvey = useMemo(
     () => surveys.find((survey) => survey.id === currentSurveyId),
@@ -111,17 +92,24 @@ export default function ReportsDashboard() {
     () => (currentSurvey ? Array.from(new Set(currentSurvey.teamIds)) : []),
     [currentSurvey]
   );
-  const selectedTeamIndex = useMemo(
-    () => uniqueTeamIds.indexOf(selectedTeam === '0' ? uniqueTeamIds[0] : selectedTeam),
+ const selectedTeamIndex = useMemo(
+    () => uniqueTeamIds.indexOf(selectedTeam === '0' ? uniqueTeamIds[0] : Number(selectedTeam)),
     [selectedTeam, uniqueTeamIds]
   );
+ 
+
+
   const selectedTeamName = selectedTeam === '0' ? '' : uniqueTeamNames[selectedTeamIndex];
+//console.log('uniqueTeamIds',uniqueTeamIds);
+
+ //console.log('selectedTeamIndex',selectedTeamIndex);
+ //console.log('selectedTeamName',selectedTeamName);
+
   const currentSurveyTeamResponseRate = useMemo(
     () =>
       currentSurvey?.responseRates?.[selectedTeamIndex] ?? 0,
     [currentSurvey, selectedTeamIndex]
   );
-  
   const surveyOverview = useMemo(
     () => [
       {
@@ -145,11 +133,8 @@ export default function ReportsDashboard() {
     [selectedTeam, currentSurveyTeamResponseRate,categoryScoreData]
   );
 
-  useEffect(() => {
-    if (paramSelectedTeamId) {
-      setSelectedTeam(paramSelectedTeamId);
-    }
-  }, [paramSelectedTeamId]);
+ 
+
 
   // Fetch Surveys (Only Once)
   useEffect(() => {
@@ -181,7 +166,7 @@ export default function ReportsDashboard() {
         const result = await response.json();
         const categoryScores: CategoryScore[] = result.category_scores.flatMap(
           (teamCategoryScores: any) =>
-            teamCategoryScores.teamId === selectedTeam
+            teamCategoryScores.teamId === Number(selectedTeam)
               ? teamCategoryScores.scores.results.map((score: any) => ({
                   category_id: score.category_id,
                   category: score.category_name, 
@@ -194,7 +179,7 @@ export default function ReportsDashboard() {
               : []
         );
         
-
+       
         setCategoryScoreData(categoryScores);
         
       } catch (error) {
@@ -233,14 +218,13 @@ export default function ReportsDashboard() {
   // Fetch Trend Data
 useEffect(() => {
   if (selectedTeam === '0') return; // Ensure selectedTeam is not "0"
-  if (!currentSurvey || !currentSurvey.teamIds.includes(selectedTeam)) {
+  if (!currentSurvey || !currentSurvey.teamIds.includes(Number(selectedTeam))) {
     //console.log("not in the list");
     setCategoriesTrend([null]);
     return; // Exit if selectedTeam is not in the list
   }
 
- // console.log("selectedTeam:", selectedTeam);
-  //console.log("currentSurvey:", currentSurvey);
+
 
   const fetchTrendData = async () => {
     try {
@@ -270,7 +254,8 @@ useEffect(() => {
 
   const handleSurveyClick = useCallback(
     (surveyId: number) => {
-      navigate(`?surveyId=${surveyId}`);
+      navigate(`/reports/overallReport?surveyId=${surveyId}`);
+      
     },
     [navigate]
   );
@@ -292,7 +277,7 @@ useEffect(() => {
     <div className="min-h-screen bg-white">
       <div className="text-sm text-gray-600 p-2 border-b">
         <h1 className="text-2xl font-semibold mb-6">
-          {currentSurvey ? `Overall Report for ${currentSurvey.name}` : 'No Selected Survey'}
+          {currentSurvey ? `${currentSurvey.name} Dashboard` : 'No Selected Survey'}
         </h1>
       </div>
 
@@ -316,38 +301,40 @@ useEffect(() => {
 
         <div className="flex-1 p-6">
   <div className="flex justify-end mb-8">
-    <Select
-      onValueChange={(value) => {
-        if (value === "overallReport") {
-          // Redirect to overall report with currentSurveyId
-          navigate(`/reports/overallReport?surveyId=${currentSurveyId}`);
-        } else {
-          setSelectedTeam(value);
-          setSelectedCategory(null); // Reset selected category when team changes
-        }
-      }}
-      defaultValue="0"
-    >
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Select Option" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="0">Select Option</SelectItem>
-        {/* Overall Report Option */}
-        <SelectItem value="overallReport">Overall Report</SelectItem>
-        {/* Dynamic Team Report Options */}
-        {uniqueTeamNames.map((teamName, index) => (
-          <SelectItem
-            key={`${currentSurveyId}-${index}`}
-            value={uniqueTeamIds[index]}
-          >
-            Team {teamName} Report
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
 
+  <Select
+  
+  onValueChange={(value) => {
+    if (value === "overallReport") {
+      // Redirect to overall report with currentSurveyId
+      navigate(`/reports/overallReport?surveyId=${currentSurveyId}`);
+    } else {
+      //setSelectedTeam(value); // Update the selected team
+      //setSelectedCategory(null); // Reset selected category when team changes
+      navigate(`?surveyId=${currentSurveyId}&teamId=${value}`); // Navigate with teamId
+    }
+  }}
+>
+  <SelectTrigger className="w-[180px]">
+    <SelectValue placeholder="Select Option" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="0">Select Option</SelectItem>
+    {/* Overall Report Option */}
+    <SelectItem value="overallReport" >Overall Report</SelectItem>
+    {/* Dynamic Team Report Options */}
+    {uniqueTeamNames.map((teamName, index) => (
+      <SelectItem
+        key={`${currentSurveyId}-${index}`}
+        value={uniqueTeamIds[index]}
+      >
+        Team {teamName} Report 
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+
+  </div>
 
           <div className="text-xl font-semibold mb-4">
             Team {selectedTeamName} Self Assessment Survey Report
@@ -395,6 +382,7 @@ useEffect(() => {
               </CardContent>
             </Card>
           </div>
+        <br></br>
           {/* Grid with Team Scores and Conditional Credit Rating/Category Advice */}
             <div className="grid md:grid-cols-2 gap-6">
               {/* Team Scores Card */}
@@ -505,7 +493,7 @@ useEffect(() => {
                 </Card>
               )}
 
-            </div>
+            </div>  <br></br>
 {/* Category Numeric Questions Card */}
 
              {selectedTeam === "0" ?
@@ -562,7 +550,7 @@ useEffect(() => {
               </Card>
 
               )}
- 
+  <br></br>
 
 {/* Category Trend Card */}
 
@@ -583,7 +571,7 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
 ) : categoriesTrend.length > 0 && categoriesTrend[0] ? (
   <Card className="w-full">
     <CardHeader>
-      <CardTitle>Categories Trend data ok </CardTitle>
+      <CardTitle>Categories Trend data </CardTitle>
     </CardHeader>
     <CardContent className="flex justify-center items-center">
       <ResponsiveContainer width="100%" height={300}>

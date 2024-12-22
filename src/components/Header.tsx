@@ -4,7 +4,7 @@ import AboutPopup from "./AboutPopup";
 
 const categories = [
   { name: "People", href: "/people" },
-  { name: "Reports", href: "/reports" },
+  { name: "Reports", href: "/reports/overallReport" },
   { name: "Teams", href: "/teams" },
   { name: "Surveys", href: "/surveys" },
   { name: "Categories & Questions", href: "/categories" },
