@@ -5,20 +5,26 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
   const svgRef = useRef(null);
 
   useEffect(() => {
-    // Filter data for the selected survey_id
-    const filteredData = data
-      .flatMap((d) =>
-        d.scores.results.map((score) => ({
-          teamId: d.teamId,
-          category_name: score.category_name,
-          score: score.score,
-          adviceColor: score.adviceColor === 'green' ? '#4CAF50' :score.adviceColor === 'red' ? '#FF5722' :score.adviceColor === 'yellow' ?'#FF9800' : '#FF9800' ,
-        }))
-      );
+    // Filter data for the selected survey_id and include team_name
+    const filteredData = data.flatMap((d) =>
+      d.scores.map((score) => ({
+        teamId: d.teamId,
+        team_name: d.team_name, // Include team_name
+        category_name: score.category_name,
+        score: score.score,
+        adviceColor:
+          score.adviceColor === "green"
+            ? "#4CAF50"
+            : score.adviceColor === "red"
+            ? "#FF5722"
+            : score.adviceColor === "yellow"
+            ? "#FF9800"
+            : "#FF9800",
+      }))
+    );
 
-
-    // Get unique team IDs and category names
-    const teamIds = [...new Set(filteredData.map((d) => d.teamId))];
+    // Get unique team names and category names
+    const teamNames = [...new Set(filteredData.map((d) => d.team_name))];
     const categories = [...new Set(filteredData.map((d) => d.category_name))];
 
     // Dimensions and margins
@@ -33,7 +39,7 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
     // Create scales
     const xScale = d3
       .scaleBand()
-      .domain(teamIds)
+      .domain(teamNames)
       .range([0, innerWidth])
       .padding(0.1);
 
@@ -52,7 +58,7 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
     g.selectAll("rect")
       .data(filteredData)
       .join("rect")
-      .attr("x", (d) => xScale(d.teamId))
+      .attr("x", (d) => xScale(d.team_name))
       .attr("y", (d) => yScale(d.category_name))
       .attr("width", xScale.bandwidth())
       .attr("height", yScale.bandwidth())
@@ -61,7 +67,12 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
     // Add X-axis
     g.append("g")
       .attr("transform", `translate(0, ${innerHeight})`)
-      .call(d3.axisBottom(xScale).tickFormat((d) => `Team ${d}`));
+      .call(d3.axisBottom(xScale))
+      .selectAll("text")
+      .style("text-anchor", "end")
+      .attr("dx", "-0.8em")
+      .attr("dy", "0.15em")
+      .attr("transform", "rotate(-45)");
 
     // Add Y-axis
     g.append("g").call(d3.axisLeft(yScale));
@@ -74,6 +85,8 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
       .style("background-color", "white")
       .style("border", "1px solid black")
       .style("padding", "5px")
+      .style("font-size", "12px") // Set font size
+      .style("font-weight", "normal") // Ensure text is not bold
       .style("display", "none");
 
     g.selectAll("rect")
@@ -81,13 +94,13 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
         tooltip
           .style("display", "block")
           .html(
-            `<strong>Category:</strong> ${d.category_name}<br><strong>Score:</strong> ${d.score}`
+            `<div>Team: ${d.team_name}</div><div>Category: ${d.category_name}</div><div>Score: ${d.score}</div>`
           )
           .style("left", `${event.pageX + 5}px`)
           .style("top", `${event.pageY + 5}px`);
       })
       .on("mouseout", () => tooltip.style("display", "none"));
-  }, [data,width, height]);
+  }, [data, width, height]);
 
   return <svg ref={svgRef} width={width} height={height}></svg>;
 };

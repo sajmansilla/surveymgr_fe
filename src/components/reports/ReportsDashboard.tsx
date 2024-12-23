@@ -22,6 +22,8 @@ interface Survey {
   responseRates?: number[];
   createdAt?: string;
   created_by?: string;
+  upperThreshold: number,
+  lowerThreshold: number,
 }
 
 interface CategoryScore {
@@ -144,7 +146,7 @@ export default function ReportsDashboard() {
         if (!response.ok) throw new Error(`Error: ${response.statusText}`);
         const data = await response.json();
         setSurveys(data.surveys || []);
-        console.log('surveys',surveys);
+       // console.log('surveys',surveys);
 
       } catch (error) {
         console.error('Failed to fetch surveys:', error);
@@ -154,43 +156,47 @@ export default function ReportsDashboard() {
   }, []);
 
   // Fetch Selected Survey Data
-  useEffect(() => {
-    if (!currentSurveyId || selectedTeam === '0') return;
+useEffect(() => {
+  if (!currentSurveyId || selectedTeam === '0') return;
 
-    const fetchReportData = async () => {
-      try {
-        const response = await fetch(`${apiUrl}/api/reports`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ survey_id: currentSurveyId }),
-        });
-        if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-        const result = await response.json();
-        const categoryScores: CategoryScore[] = result.category_scores.flatMap(
-          (teamCategoryScores: any) =>
-            teamCategoryScores.teamId === Number(selectedTeam)
-              ? teamCategoryScores.scores.results.map((score: any) => ({
+  const fetchReportData = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ survey_id: currentSurveyId }),
+      });
+      if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+      const result = await response.json();
+      //console.log('result from FE', result);
+
+      const categoryScores: CategoryScore[] = result.category_scores.flatMap(
+        (teamCategoryScores: any) =>
+          teamCategoryScores.teamId === Number(selectedTeam)
+            ? teamCategoryScores.scores
+                .filter((score: any) => score.category_id !== 0) // Exclude the PsychologicalSafety category which has id = 0
+                .map((score: any) => ({
                   category_id: score.category_id,
-                  category: score.category_name, 
+                  category: score.category_name,
                   score: score.score,
                   advice: score.advice,
                   adviceColor: score.adviceColor,
-                  topScore: score.top_score? true: false,
-                  lowScore: score.low_score? true: false,
+                  topScore: score.top_score ? true : false,
+                  lowScore: score.low_score ? true : false,
                 }))
-              : []
-        );
-      console.log('result',result);
-        
-        setCategoryScoreData(categoryScores);
-        
-      } catch (error) {
-        console.error('Failed to fetch report data:', error);
-      }
-    };
+            : []
+      );
 
-    fetchReportData();
-  }, [currentSurveyId, selectedTeam]);
+      //console.log('Filtered categoryScores', categoryScores);
+
+      setCategoryScoreData(categoryScores);
+    } catch (error) {
+      console.error('Failed to fetch report data:', error);
+    }
+  };
+
+  fetchReportData();
+}, [currentSurveyId, selectedTeam]);
 
   // Fetch Categories and Questions
   useEffect(() => {
@@ -277,15 +283,10 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="text-sm text-gray-600 p-2 border-b">
-        <h1 className="text-2xl font-semibold mb-6">
-          {currentSurvey ? `${currentSurvey.name} Dashboard` : 'No Selected Survey'}
-        </h1>
-      </div>
-
+    
       <div className="flex min-h-[calc(100vh-112px)]">
         <div className="w-64 border-r bg-white p-6">
-          <div className="text-xl font-semibold mb-4">Survey List</div>
+          <div className="text-xl font-semibold mb-4 text-left" >Survey List</div>
           <div className="space-y-2">
             {surveys.map((survey) => (
               <button
@@ -295,7 +296,7 @@ useEffect(() => {
                   currentSurveyId === survey.id ? 'bg-gray-200' : ''
                 }`}
               >
-                {survey.name}
+                Survey : {survey.name}
               </button>
             ))}
           </div>
@@ -338,7 +339,7 @@ useEffect(() => {
   </div>
 
           <div className="text-xl font-semibold mb-4">
-            Team {selectedTeamName} Self Assessment Survey Report
+            Survey {currentSurvey?.name} ::: Team {selectedTeamName} Self Assessment Report
           </div>
 
           <div className="space-y-6">
@@ -418,8 +419,8 @@ useEffect(() => {
                         <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
                         <YAxis dataKey="category" type="category" interval={0} tick={{ fontSize: 12 }} />
                         <Tooltip contentStyle={{ fontSize: '12px' }} />
-                        <ReferenceLine x={3.25} stroke="red" strokeDasharray="3 3" />
-                        <ReferenceLine x={3.75} stroke="green" strokeDasharray="3 3" />
+                        <ReferenceLine x={currentSurvey?.lowerThreshold} stroke="red" strokeDasharray="3 3" />
+                        <ReferenceLine x={currentSurvey?.upperThreshold} stroke="green" strokeDasharray="3 3" />
                         <Bar
                           dataKey="score"
                           name="Score"

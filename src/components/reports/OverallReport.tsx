@@ -22,10 +22,13 @@ interface Survey {
   responseRates?: number[];
   createdAt?: string;
   created_by?: string;
+  upperThreshold: number,
+  lowerThreshold: number,
 }
 
 interface HeatMapDataInterface {
   teamId : number ;
+  team_name: string;
   survey_id : number,
   scores: {
     category_id: number;
@@ -40,7 +43,7 @@ export default function OverallReport() {
   // State Variables
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>('0');
-  const [heatMapData, setHeatmapData] = useState<HeatMapDataInterface[]>([]);
+  const [heatMapData, setHeatMapData] = useState<HeatMapDataInterface[]>([]);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -121,53 +124,57 @@ export default function OverallReport() {
   );
 
   /// Heat Map Code ///
-
- 
   // Fetch Selected Survey Data
-  useEffect(() => {
-    if (!currentSurveyId) return;
+useEffect(() => {
+  if (!currentSurveyId) return;
 
-    const fetchSurveytData = async () => {
-      try {
-        const response = await fetch(`${apiUrl}/api/reports`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ survey_id: currentSurveyId }),
-        });
-        if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-        const result = await response.json();
-       
-        console.log('result',result);
-        
-        setHeatmapData(result.category_scores);
-        
-      } catch (error) {
-        console.error('Failed to fetch report data:', error);
-      }
-    };
+  const fetchSurveyData = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ survey_id: currentSurveyId }),
+      });
+      if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+      const result = await response.json();
+      //console.log('result from overall ',result);
 
-    fetchSurveytData();
-  }, [currentSurveyId]);
+      // Enrich the heatMapData with team names
+      const enrichedHeatmapData = result.category_scores.map((scoreData) => {
+       const teamIndex = uniqueTeamIds.indexOf(scoreData.teamId);
 
-console.log('heatmapData',heatMapData);
-  
-  /// Heat Map Code // 
-  // Function to handle survey selection
-  const handleSurveyClick = useCallback(
-    (surveyId: number) => {
-      navigate(`?surveyId=${surveyId}`);
-    },
-    [navigate]
-  );
+        const team_name = teamIndex !== -1 ? uniqueTeamNames[teamIndex] : 'Unknown Team';
 
- 
+        return {
+          ...scoreData,
+          team_name,
+        };
+      });
+      setHeatMapData(enrichedHeatmapData);
 
+    } catch (error) {
+      console.error('Failed to fetch report data:', error);
+    }
+  };
+
+  fetchSurveyData();
+}, [currentSurveyId, uniqueTeamIds, uniqueTeamNames]);
+
+
+ //console.log('heatMapData',heatMapData);
+ const handleSurveyClick = useCallback(
+  (surveyId: number) => {
+    navigate(`?surveyId=${surveyId}`);
+    
+  },
+  [navigate]
+);
   return (
     <div className="min-h-screen bg-white">
       <div className="flex min-h-[calc(100vh-112px)]">
         {/* Survey List */}
         <div className="w-64 border-r bg-white p-6">
-          <div className="text-xl font-semibold mb-4">Survey List</div>
+        <div className="text-xl font-semibold mb-4 text-left" >Survey List</div>
           <div className="space-y-2">
             {surveys.map((survey) => (
               <button
@@ -177,7 +184,7 @@ console.log('heatmapData',heatMapData);
                   currentSurveyId === survey.id ? 'bg-gray-200' : ''
                 }`}
               >
-                {survey.name}
+              Survey : {survey.name}
               </button>
             ))}
           </div>
@@ -221,7 +228,7 @@ console.log('heatmapData',heatMapData);
   </div>
   <div className="text-xl font-semibold mb-4">
 
-            Overall {currentSurvey?.name} Report
+            Overall Survey : {currentSurvey?.name} Report
           </div>
 
           <div className="space-y-6">
@@ -276,7 +283,7 @@ console.log('heatmapData',heatMapData);
               </CardHeader>
               <CardContent>
                 <div className="text-center text-gray-600 text-sm">
-                  {heatMapData.some((team) => team.scores.results.length > 0) ? (
+                  {heatMapData.some((team) => team.scores.length > 0) ? (
                 <Heatmap data={heatMapData} />
                     ) : (
                       <p>   No data available for the selected survey. Please ensure data is available.
