@@ -46,7 +46,12 @@ const SurveyForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     const apiUrl = import.meta.env.VITE_API_URL;
     e.preventDefault();
-    
+
+    if (!survey_id || !token) {
+      setError('Survey ID or token is missing.');
+      return;
+    }
+
     try {
       const response = await fetch(`${apiUrl}/api/responses`, {
         method: 'POST',
@@ -155,46 +160,40 @@ const SurveyForm = () => {
 
   // Here goes the survey form
   return (
-    <div>
-      <h1>Survey Preview</h1>
-      <p>Survey ID: {survey_id}</p>
-      <p>Token: {token}</p>
-      {/* Aquí va el contenido de la encuesta */}
-      <div className="min-h-screen bg-[#031320] text-white font-mono p-8">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl mb-6 text-center">{'{'} Survey: {survey?.name} {'}'}</h1>
-          <p className="mb-8 text-center">{survey?.description}</p>
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {questions.map((question) => (
-              <div key={question.id} className="bg-[#0a1925] p-6 rounded-lg shadow-md">
-                <p className="mb-4">{question.question}</p>
-                <div className="flex justify-between">
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <label key={value} className="flex flex-col items-center">
-                      <input
-                        type="radio"
-                        name={`question_${question.id}`}
-                        value={value}
-                        onChange={(e) => handleResponseChange(question.id, e.target.value)}
-                        className="mb-2"
-                        required
-                      />
-                      {value}
-                    </label>
-                  ))}
-                </div>
+    <div className="min-h-screen bg-[#031320] text-white font-mono p-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl mb-6 text-center">{'{'} Survey: {survey?.name} {'}'}</h1>
+        <p className="mb-8 text-center">{survey?.description}</p>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {questions.map((question) => (
+            <div key={question.id} className="bg-[#0a1925] p-6 rounded-lg shadow-md">
+              <p className="mb-4">{question.question}</p>
+              <div className="flex justify-between">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <label key={value} className="flex flex-col items-center">
+                    <input
+                      type="radio"
+                      name={`question_${question.id}`}
+                      value={value}
+                      onChange={(e) => handleResponseChange(question.id, e.target.value)}
+                      className="mb-2"
+                      required
+                    />
+                    {value}
+                  </label>
+                ))}
               </div>
-            ))}
-            <div className="flex justify-center">
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
-              >
-                Submit Survey
-              </button>
             </div>
-          </form>
-        </div>
+          ))}
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+            >
+              Submit Survey
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

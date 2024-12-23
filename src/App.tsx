@@ -21,7 +21,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isLandingPage = location.pathname === '/'; // Hide header on landing page
   const isSurveyForm = location.pathname.includes('/answer-survey') // Hide header on survey form
   const isErrorPage = location.pathname.includes('/error') // Hide header on error page
-  const hideHeader = isLandingPage || isSurveyForm || isErrorPage;
+  const isThanksPage = location.pathname.includes('/thanks') // Hide header on Thanks page
+  const hideHeader = isLandingPage || isSurveyForm || isErrorPage || isThanksPage;
 
   return (
     <>
