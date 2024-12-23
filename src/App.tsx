@@ -1,28 +1,31 @@
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { LandingPage } from '@/components/landingpage';
-import { SurveyDashboard, SurveyPreview } from '@/components/surveys';
+import { SurveyDashboard, SurveyPreview, SurveyForm } from '@/components/surveys';
+import ErrorPage from './components/ErrorPage';
 import AddPeople from '@/components/AddPeople';
 import AddTeams from '@/components/AddTeams';
 import AddTeamMembers from '@/components/AddTeamMembers';
 import AddCategories from '@/components/AddCategories';
 import AddQuestions from '@/components/AddQuestions';
 import CreateSurvey from '@/components/CreateSurvey';
-import {ReportsDashboard} from '@/components/reports';
-import{OverallReport} from '@/components/reports';
+import { ReportsDashboard } from '@/components/reports';
+import { OverallReport } from '@/components/reports';
 import { ViewSurvey } from '@/components/viewsurvey';
-import TeamGaiaSurvey from '@/components/app_survey';
 import Header from '@/components/Header';
 import '@/App.css';
 
 // Componente para condicionalmente renderizar el Header
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const isLandingPage = location.pathname === '/'; // Oculta el header solo en "/"
+  const isLandingPage = location.pathname === '/'; // Hide header on landing page
+  const isSurveyForm = location.pathname.includes('/answer-survey') // Hide header on survey form
+  const isErrorPage = location.pathname.includes('/error') // Hide header on error page
+  const hideHeader = isLandingPage || isSurveyForm || isErrorPage;
 
   return (
     <>
-      {!isLandingPage && <Header />}
-      <div className={!isLandingPage ? 'pt-20' : ''}>
+      {!hideHeader && <Header />}
+      <div className={(!hideHeader) ? 'pt-20' : ''}>
         {children}
       </div>
     </>
@@ -37,6 +40,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/surveys" element={<SurveyDashboard />} />
           <Route path="/survey/:survey_id" element={<SurveyPreview />} />
+          <Route path="/answer-survey/:survey_id/:token" element={<SurveyForm />} />
+          <Route path="/view-survey/:survey_id" element={<ViewSurvey />} />
           <Route path="/people" element={<AddPeople />} />
           <Route path="/teams" element={<AddTeams />} />
           <Route path="/assignments" element={<AddTeamMembers />} />
@@ -44,10 +49,9 @@ function App() {
           <Route path="/questions" element={<AddQuestions />} />
           <Route path="/create-survey" element={<CreateSurvey />} />
           <Route path="/reports" element={<ReportsDashboard />} />
-          <Route path="/reports/overallReport" element={<OverallReport/>} />
+          <Route path="/reports/overallReport" element={<OverallReport />} />
           <Route path="/reports/:survey_id" element={<ReportsDashboard />} />
-          <Route path="/view-survey/:survey_id" element={<ViewSurvey />} />
-          <Route path="/team-gaia-survey" element={<TeamGaiaSurvey />} />
+          <Route path="/error" element={<ErrorPage />} />
         </Routes>
       </Layout>
     </Router>
