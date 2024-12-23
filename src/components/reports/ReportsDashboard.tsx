@@ -144,6 +144,8 @@ export default function ReportsDashboard() {
         if (!response.ok) throw new Error(`Error: ${response.statusText}`);
         const data = await response.json();
         setSurveys(data.surveys || []);
+        console.log('surveys',surveys);
+
       } catch (error) {
         console.error('Failed to fetch surveys:', error);
       }
@@ -151,7 +153,7 @@ export default function ReportsDashboard() {
     fetchSurveys();
   }, []);
 
-  // Fetch Report Data
+  // Fetch Selected Survey Data
   useEffect(() => {
     if (!currentSurveyId || selectedTeam === '0') return;
 
@@ -178,8 +180,8 @@ export default function ReportsDashboard() {
                 }))
               : []
         );
+      console.log('result',result);
         
-       
         setCategoryScoreData(categoryScores);
         
       } catch (error) {

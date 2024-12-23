@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback} from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, XAxis, YAxis, ResponsiveContainer, Tooltip, Label, LineChart, Line, Legend } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Heatmap from './Heatmap';
 
 // API Base URL
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -23,17 +24,24 @@ interface Survey {
   created_by?: string;
 }
 
-interface TrendData {
-  survey: string;
-  [category: string]: string | number;
-}
+interface HeatMapDataInterface {
+  teamId : number ;
+  survey_id : number,
+  scores: {
+    category_id: number;
+    category_name: string;
+    score: number;
+    adviceColor: string;
+    
+  }[]; }
+
 
 export default function OverallReport() {
   // State Variables
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>('0');
-  const [categoriesTrend, setCategoriesTrend] = useState<TrendData[]>([]);
-  const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
+  const [heatMapData, setHeatmapData] = useState<HeatMapDataInterface[]>([]);
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -112,7 +120,38 @@ export default function OverallReport() {
     [selectedTeam, currentSurveyTeamResponseRate]
   );
 
+  /// Heat Map Code ///
+
+ 
+  // Fetch Selected Survey Data
+  useEffect(() => {
+    if (!currentSurveyId) return;
+
+    const fetchSurveytData = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/api/reports`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ survey_id: currentSurveyId }),
+        });
+        if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+        const result = await response.json();
+       
+        console.log('result',result);
+        
+        setHeatmapData(result.category_scores);
+        
+      } catch (error) {
+        console.error('Failed to fetch report data:', error);
+      }
+    };
+
+    fetchSurveytData();
+  }, [currentSurveyId]);
+
+console.log('heatmapData',heatMapData);
   
+  /// Heat Map Code // 
   // Function to handle survey selection
   const handleSurveyClick = useCallback(
     (surveyId: number) => {
@@ -121,15 +160,7 @@ export default function OverallReport() {
     [navigate]
   );
 
-  // Function to handle category visibility in the trend chart
-  const handleLegendClick = (e: any) => {
-    const categoryName = e.dataKey;
-    setHiddenCategories((prev) =>
-      prev.includes(categoryName)
-        ? prev.filter((category) => category !== categoryName)
-        : [...prev, categoryName]
-    );
-  };
+ 
 
   return (
     <div className="min-h-screen bg-white">
@@ -238,51 +269,23 @@ export default function OverallReport() {
         <br></br>
 
           {/* Teams Heatmap */}
-          {categoriesTrend.length > 0 ? (
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle>Teams Heatmap</CardTitle>
-              </CardHeader>
-              <CardContent className="flex justify-center items-center">
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={categoriesTrend}>
-                    <XAxis dataKey="survey" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} domain={[0, 5]} />
-                    <Tooltip contentStyle={{ fontSize: '12px' }} />
-                    <Legend
-                      wrapperStyle={{ fontSize: '12px' }}
-                      onClick={(e) => handleLegendClick(e)}
-                    />
-                    {/* Dynamically generate lines for each key */}
-                    {Object.keys(categoriesTrend[0])
-                      .filter((key) => key !== 'survey')
-                      .map((key, index) => (
-                        <Line
-                          key={key}
-                          type="monotone"
-                          dataKey={key}
-                          stroke={['#4CAF50', '#2196F3', '#FF9800', '#E91E63'][index % 4]}
-                          strokeWidth={2}
-                          dot={{ r: 3 }}
-                          hide={hiddenCategories.includes(key)}
-                        />
-                      ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          ) : (
+          
             <Card>
               <CardHeader>
                 <CardTitle>Teams Heatmap</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center text-gray-600 text-sm">
-                  No data available for the selected survey. Please ensure data is available.
+                  {heatMapData.some((team) => team.scores.results.length > 0) ? (
+                <Heatmap data={heatMapData} />
+                    ) : (
+                      <p>   No data available for the selected survey. Please ensure data is available.
+                      </p>
+                    )}
                 </div>
               </CardContent>
             </Card>
-          )}
+          
         </div>
       </div>
     </div>
