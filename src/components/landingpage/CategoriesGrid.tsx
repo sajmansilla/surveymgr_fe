@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const categories = [
   { name: "People", href: "/people", icon: "/joint-account-on-white.svg" },
-  { name: "Reports", href: "/reports", icon: "/feedback-on-white.svg" },
+  { name: "Reports", href: "/reports/overallReport", icon: "/feedback-on-white.svg" },
   { name: "Teams", href: "/teams", icon: "/yes-I-am-new-on-white.svg" },
   { name: "Surveys", href: "/surveys", icon: "/survey-on-white.svg" },
   { name: "Categories & Questions", href: "/categories", icon: "/education-on-white.svg" },
