@@ -158,8 +158,6 @@ function CreateSurvey() {
       questions: selectedQuestions
     };
 
-    console.log('Body:', body);
-
     try {
       const response = await fetch(`${apiUrl}/api/survey`, {
         method: 'POST',
@@ -173,8 +171,6 @@ function CreateSurvey() {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
 
-      const result = await response.json();
-      console.log('Survey draft saved:', result);
       alert('Survey draft saved successfully!');
       navigate('/surveys');
     } catch (error) {

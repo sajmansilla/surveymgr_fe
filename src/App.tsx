@@ -12,6 +12,7 @@ import { ReportsDashboard } from '@/components/reports';
 import { OverallReport } from '@/components/reports';
 import { ViewSurvey } from '@/components/viewsurvey';
 import Header from '@/components/Header';
+import ThanksPage from '@/components/surveys/ThanksPage';
 import '@/App.css';
 
 // Componente para condicionalmente renderizar el Header
@@ -52,7 +53,8 @@ function App() {
           <Route path="/reports/overallReport" element={<OverallReport />} />
           <Route path="/reports/:survey_id" element={<ReportsDashboard />} />
           <Route path="/error" element={<ErrorPage />} />
-        </Routes>
+          <Route path="/thanks" element={<ThanksPage />} />
+      </Routes>
       </Layout>
     </Router>
   );

@@ -25,7 +25,6 @@ const SurveyForm = () => {
   const [survey, setSurvey] = useState<Survey | null>(null);
   const { survey_id, token } = useParams(); // Get params from URL
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [teams, setTeams] = useState<{ id: number }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate(); // Hook to redirect to error page
   const [loading, setLoading] = useState(true); // To manage loading state
@@ -72,6 +71,13 @@ const SurveyForm = () => {
     }
   };
 
+  // Redirect to the thanks page when the survey is submitted successfully
+  useEffect(() => {
+    if (submitSuccess) {
+      navigate('/thanks');
+    }
+  }, [submitSuccess, navigate]);
+
   // Effect to validate token for the survey
   useEffect(() => {
     const validateToken = async () => {
@@ -91,11 +97,12 @@ const SurveyForm = () => {
           setIsTokenValid(true);
         } else {
           // Si el token es inválido, actualizar el estado
+          setError('The token is invalid or expired.');
           setIsTokenValid(false);
         }
 
       } catch (error) {
-        console.error('Error al validar el token:', error);
+        console.error('Error when validating the token:', error);
         setIsTokenValid(false); // If there's an error, set the state to false
       } finally {
         setLoading(false); // Change the loading state to false
@@ -108,10 +115,10 @@ const SurveyForm = () => {
 
   useEffect(() => {
     if (!loading && !isTokenValid) {
-      // If the token is invalid, redirect to the error page
-      navigate('/error'); // Redirect to the error page
+      // If the token is invalid, redirect to the error page with the error message in the state
+      navigate('/error', { state: { error } }); // Passing the error message in the state
     }
-  }, [loading, isTokenValid, navigate]);
+  }, [isTokenValid, navigate, error]);
 
   // Effect to bring the questions for the survey
   useEffect(() => {
@@ -127,7 +134,6 @@ const SurveyForm = () => {
         const data = await response.json();
         setSurvey(data.survey);
         setQuestions(data.questions);
-        setTeams(data.teams);
         setLoading(false);
       } catch (err) {
         setError('Failed to load survey data. Please try again later.');
