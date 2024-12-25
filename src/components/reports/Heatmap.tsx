@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-const Heatmap = ({ data, width = 800, height = 400 }) => {
+const Heatmap = ({ data, width = 800, height = 500 }) => {
   const svgRef = useRef(null);
 
   useEffect(() => {
@@ -11,6 +11,7 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
         teamId: d.teamId,
         team_name: d.team_name, // Include team_name
         category_name: score.category_name,
+        teamResponseRate: d.teamResponseRate,
         score: score.score,
         adviceColor:
           score.adviceColor === "green"
@@ -23,9 +24,10 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
       }))
     );
 
-    // Get unique team names and category names
+    // Get unique team names and Y-axis labels (categories + "Response Rate")
     const teamNames = [...new Set(filteredData.map((d) => d.team_name))];
     const categories = [...new Set(filteredData.map((d) => d.category_name))];
+    const yAxisLabels = [...categories, "Response Rate"]; // Append "Response Rate" to Y-axis
 
     // Dimensions and margins
     const margin = { top: 20, right: 20, bottom: 50, left: 150 };
@@ -45,7 +47,7 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
 
     const yScale = d3
       .scaleBand()
-      .domain(categories)
+      .domain(yAxisLabels)
       .range([0, innerHeight])
       .padding(0.1);
 
@@ -54,15 +56,31 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
       .append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-    // Draw heatmap cells
-    g.selectAll("rect")
+    // Draw heatmap cells for categories
+    g.selectAll(".categoryCell")
       .data(filteredData)
       .join("rect")
+      .attr("class", "categoryCell")
       .attr("x", (d) => xScale(d.team_name))
       .attr("y", (d) => yScale(d.category_name))
       .attr("width", xScale.bandwidth())
       .attr("height", yScale.bandwidth())
       .attr("fill", (d) => d.adviceColor);
+
+    // Draw heatmap cells for response rates
+    g.selectAll(".responseRateCell")
+      .data(data)
+      .join("rect")
+      .attr("class", "responseRateCell")
+      .attr("x", (d) => xScale(d.team_name))
+      .attr("y", () => yScale("Response Rate"))
+      .attr("width", xScale.bandwidth())
+      .attr("height", yScale.bandwidth())
+      .attr("fill", (d) => {
+        if (d.teamResponseRate <= 0) return "#FF5722"; // Red for <= 0
+        if (d.teamResponseRate <= 50) return "#FF9800"; // Orange for 0 < rate <= 50
+        return "#4CAF50"; // Green for > 50
+      });
 
     // Add X-axis
     g.append("g")
@@ -89,12 +107,15 @@ const Heatmap = ({ data, width = 800, height = 400 }) => {
       .style("font-weight", "normal") // Ensure text is not bold
       .style("display", "none");
 
+    // Add tooltips for categories and response rates
     g.selectAll("rect")
       .on("mouseover", (event, d) => {
         tooltip
           .style("display", "block")
           .html(
-            `<div>Team: ${d.team_name}</div><div>Category: ${d.category_name}</div><div>Score: ${d.score}</div>`
+            d.category_name
+              ? `<div>Team: ${d.team_name}</div><div>Category: ${d.category_name}</div><div>Score: ${d.score}</div>`
+              : `<div>Team: ${d.team_name}</div><div>Response Rate: ${d.teamResponseRate}%</div>`
           )
           .style("left", `${event.pageX + 5}px`)
           .style("top", `${event.pageY + 5}px`);

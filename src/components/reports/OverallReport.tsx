@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo, useCallback} from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Pie, Cell, XAxis, YAxis, ResponsiveContainer, Tooltip, Label, LineChart, Line, Legend } from 'recharts';
+import { PieChart, Pie, Cell,ResponsiveContainer, Label} from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Heatmap from './Heatmap';
 
@@ -26,10 +26,12 @@ interface Survey {
   lowerThreshold: number,
 }
 
-interface HeatMapDataInterface {
+interface SurveyDataInterface {
   teamId : number ;
   team_name: string;
   survey_id : number,
+  normalizedScore : number,
+  teamResponseRate : number,
   scores: {
     category_id: number;
     category_name: string;
@@ -42,8 +44,7 @@ interface HeatMapDataInterface {
 export default function OverallReport() {
   // State Variables
   const [surveys, setSurveys] = useState<Survey[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<string>('0');
-  const [heatMapData, setHeatMapData] = useState<HeatMapDataInterface[]>([]);
+  const [surveyData, setSurveyData] = useState<SurveyDataInterface[]>([]);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -68,7 +69,6 @@ export default function OverallReport() {
     }
   }, [fetchSurveys, surveys]);
 
-
   // Derived Values
  
   const paramSurveyId = searchParams.get('surveyId');
@@ -83,6 +83,7 @@ export default function OverallReport() {
     [surveys, currentSurveyId]
   );
 
+  console.log('currentSurvey',currentSurvey);
   const uniqueTeamNames = useMemo(
     () => (currentSurvey ? Array.from(new Set(currentSurvey.teamNames)) : []),
     [currentSurvey]
@@ -91,40 +92,9 @@ export default function OverallReport() {
     () => (currentSurvey ? Array.from(new Set(currentSurvey.teamIds)) : []),
     [currentSurvey]
   );
-  const selectedTeamIndex = useMemo(
-    () => uniqueTeamIds.indexOf(selectedTeam === '0' ? uniqueTeamIds[0] : Number(selectedTeam)),
-    [selectedTeam, uniqueTeamIds]
-  );
-  const currentSurveyTeamResponseRate = useMemo(
-    () =>
-      currentSurvey?.responseRates?.[selectedTeamIndex] ?? 0,
-    [currentSurvey, selectedTeamIndex]
-  );
-  const surveyOverview = useMemo(
-    () => [
-      {
-        name: selectedTeam !== '0' ? 'Response Rate' : 'No Response Rate',
-        value: selectedTeam !== '0' ? currentSurveyTeamResponseRate : 0,
-        color: '#2196F3',
-      },
-      {
-        name: selectedTeam !== '0' ? 'Response Rate' : 'No Response Rate',
-        value: selectedTeam !== '0' ? currentSurveyTeamResponseRate : 0,
-        color: '#4CAF50',
-      }
-      ,
-      {
-        name: selectedTeam !== '0' ? 'Response Rate' : 'No Response Rate',
-        value: selectedTeam !== '0' ? currentSurveyTeamResponseRate : 0,
-        color: '#FF7043',
-        
-      },
-    ],
-    [selectedTeam, currentSurveyTeamResponseRate]
-  );
+ 
 
-  /// Heat Map Code ///
-  // Fetch Selected Survey Data
+// Fetch Selected Survey Data
 useEffect(() => {
   if (!currentSurveyId) return;
 
@@ -137,21 +107,22 @@ useEffect(() => {
       });
       if (!response.ok) throw new Error(`Error: ${response.statusText}`);
       const result = await response.json();
-      //console.log('result from overall ',result);
+      console.log('result from overall ',result);
 
-      // Enrich the heatMapData with team names
-      const enrichedHeatmapData = result.category_scores.map((scoreData) => {
+      // Enrich the surveyData with team names
+      const overallReportData = result.category_scores.map((scoreData) => {
        const teamIndex = uniqueTeamIds.indexOf(scoreData.teamId);
 
         const team_name = teamIndex !== -1 ? uniqueTeamNames[teamIndex] : 'Unknown Team';
-
+        const teamResponseRate = currentSurvey?.responseRates?.[teamIndex] ?? 0;
         return {
           ...scoreData,
           team_name,
+          teamResponseRate,
         };
       });
-      setHeatMapData(enrichedHeatmapData);
-
+      setSurveyData(overallReportData);
+//console.log('overallReportData',overallReportData);
     } catch (error) {
       console.error('Failed to fetch report data:', error);
     }
@@ -161,7 +132,29 @@ useEffect(() => {
 }, [currentSurveyId, uniqueTeamIds, uniqueTeamNames]);
 
 
- //console.log('heatMapData',heatMapData);
+/// prepare recommended teams pie charts data
+//console.log('surveyData >>>',surveyData);
+
+
+const recommendedTeams = useMemo(() => {
+  if (!surveyData || surveyData.length === 0) {
+    return Array(4).fill({
+      name: 'No Data',
+      value: 0,
+      color: '#CCCCCC', // Default color for "No Data"
+    });
+  }
+
+  const colors = ['#FF7043', '#FF9800', '#FFB300','#FFD700']; // Colors for the first 3 teams
+
+  return surveyData.slice(0, 4).map((team, index) => ({
+    name: team.team_name ? `Team ${team.team_name} \n Response Rate: ${team.teamResponseRate}%` : 'No Data',
+    value: Number(team.normalizedScore) || 0, // Ensure value is numeric
+    color: colors[index] || '#CCCCCC', // Assign colors dynamically
+  }));
+}, [surveyData]);
+
+/// handle the survey list menu////
  const handleSurveyClick = useCallback(
   (surveyId: number) => {
     navigate(`?surveyId=${surveyId}`);
@@ -169,6 +162,7 @@ useEffect(() => {
   },
   [navigate]
 );
+///// end handle the survey list menu////
   return (
     <div className="min-h-screen bg-white">
       <div className="flex min-h-[calc(100vh-112px)]">
@@ -235,14 +229,16 @@ useEffect(() => {
             {/* Survey Overview Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Survey Overview</CardTitle>
+                <CardTitle>Teams That May Need Attention</CardTitle>
               </CardHeader>
               <CardContent className="flex justify-around h-[200px]">
                 {
                 
-                surveyOverview.map((data, index) => {
-                  const numericDrawValue = index === 0 ? data.value : (data.value / 5) * 100;
-                  const displayValue = index === 0 ? `${data.value}%` : `${data.value}`;
+                recommendedTeams.map((data, index) => {
+                  //const numericDrawValue = index === 0 ? data.value : (data.value / 5) * 100;
+                  const numericDrawValue = data.value;
+                  //const displayValue = index === 0 ? `${data.value}%` : `${data.value}`;
+                  const displayValue = `${data.value} %`;
                   const chartData = [
                     { name: data.name, value: numericDrawValue },
                     { name: 'Remainder', value: 100 - numericDrawValue },
@@ -265,7 +261,7 @@ useEffect(() => {
                         </PieChart>
                       </ResponsiveContainer>
                       <div className="mt-2">
-                        <div style={{ fontSize: '14px', color: 'black', fontWeight: '500' }}>{data.name}</div>
+                        <div style={{ fontSize: '14px', color: 'black', fontWeight: '500',whiteSpace: 'pre-wrap' }}>{data.name}</div>
                       </div>
                     </div>
                   );
@@ -283,8 +279,8 @@ useEffect(() => {
               </CardHeader>
               <CardContent>
                 <div className="text-center text-gray-600 text-sm">
-                  {heatMapData.some((team) => team.scores.length > 0) ? (
-                <Heatmap data={heatMapData} />
+                  {surveyData.some((team) => team.scores.length > 0) ? (
+                <Heatmap data={surveyData} />
                     ) : (
                       <p>   No data available for the selected survey. Please ensure data is available.
                       </p>
