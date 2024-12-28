@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback} from 'react';
+import { useEffect, useState, useMemo, useCallback} from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell,ResponsiveContainer, Label} from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Heatmap from './Heatmap';
+import QuestionSummarizer from "./QuestionSummarizer";
+import AggregateHighlightsWordCloud from "./AggregateHighlightsWordCloud";
+
+
 
 // API Base URL
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -83,7 +87,7 @@ export default function OverallReport() {
     [surveys, currentSurveyId]
   );
 
-  console.log('currentSurvey',currentSurvey);
+  //console.log('currentSurvey',currentSurvey);
   const uniqueTeamNames = useMemo(
     () => (currentSurvey ? Array.from(new Set(currentSurvey.teamNames)) : []),
     [currentSurvey]
@@ -100,14 +104,14 @@ useEffect(() => {
 
   const fetchSurveyData = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/reports`, {
+      const response = await fetch(`${apiUrl}/api/reportsData`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ survey_id: currentSurveyId }),
       });
       if (!response.ok) throw new Error(`Error: ${response.statusText}`);
       const result = await response.json();
-      console.log('result from overall ',result);
+     // console.log('result from overall ',result);
 
       // Enrich the surveyData with team names
       const overallReportData = result.category_scores.map((scoreData) => {
@@ -163,6 +167,15 @@ const recommendedTeams = useMemo(() => {
   [navigate]
 );
 ///// end handle the survey list menu////
+///// handle the word cloud ///
+const words = [
+  { text: "Collaboration", value: 50 },
+  { text: "Trust", value: 30 },
+  { text: "Accountability", value: 20 },
+  { text: "Conflict", value: 40 },
+  { text: "Focus", value: 60 },
+  { text: "Commitment", value: 35 },
+];
   return (
     <div className="min-h-screen bg-white">
       <div className="flex min-h-[calc(100vh-112px)]">
@@ -289,6 +302,27 @@ const recommendedTeams = useMemo(() => {
               </CardContent>
             </Card>
           
+          <br></br>
+          <div>
+      
+      
+                <AggregateHighlightsWordCloud data={surveyData} />
+               
+
+    
+    </div>
+    <div> 
+    <Card>
+              <CardHeader>
+                <CardTitle>Achievements and Wishes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-left text-gray-600 text-sm">
+                <QuestionSummarizer data={surveyData} />
+                </div>
+              </CardContent>
+            </Card>
+      </div>
         </div>
       </div>
     </div>

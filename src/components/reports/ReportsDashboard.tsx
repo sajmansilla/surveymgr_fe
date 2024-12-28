@@ -214,6 +214,7 @@ useEffect(() => {
         });
         if (!response.ok) throw new Error(`Error: ${response.statusText}`);
         const data: CategoryQuestions[] = await response.json();
+        console.log('setCategoryQuestions',data);
         setCategoryQuestions(data);
       } catch (error) {
         console.error('Failed to fetch categories and questions:', error);
