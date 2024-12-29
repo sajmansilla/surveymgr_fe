@@ -288,7 +288,7 @@ const words = [
           
             <Card>
               <CardHeader>
-                <CardTitle>Teams Heatmap</CardTitle>
+                <CardTitle className="text-lg">Teams Heatmap</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center text-gray-600 text-sm">
@@ -304,21 +304,16 @@ const words = [
           
           <br></br>
           <div>
-      
-      
                 <AggregateHighlightsWordCloud data={surveyData} />
-               
-
-    
     </div>
     <div> 
     <Card>
               <CardHeader>
-                <CardTitle>Achievements and Wishes</CardTitle>
+                <CardTitle className="text-lg">Achievements and Wishes</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-left text-gray-600 text-sm">
-                <QuestionSummarizer data={surveyData} />
+              <div className="text-left w-full p-4 rounded-lg shadow-md bg-white">
+              <QuestionSummarizer data={surveyData} />
                 </div>
               </CardContent>
             </Card>

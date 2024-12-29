@@ -89,7 +89,7 @@ const AggregateHighlightsWordCloud: React.FC<AggregateHighlightsWordCloudProps> 
           <div key={index} className="mb-4">
             <Card className="bg-white">
               <CardHeader>
-                <CardTitle >{question}</CardTitle>
+                <CardTitle className="text-lg">{question}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center text-gray-600 text-sm">
