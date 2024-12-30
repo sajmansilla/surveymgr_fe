@@ -102,7 +102,7 @@ function CreateSurvey() {
   };
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://surveymgr-production.up.railway.app';
+    const apiUrl = import.meta.env.VITE_API_URL;
 
     fetch(`${apiUrl}/api/teams`)
       .then(response => response.json())
