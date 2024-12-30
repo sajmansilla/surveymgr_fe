@@ -23,7 +23,6 @@ import {
 import { cn } from "@/lib/utils.ts";
 import { CalendarIcon } from 'lucide-react';
 import QuestionsComponent from "./QuestionsComponent.tsx";
-import TeamMembers from "./TeamMembers.tsx";
 
 
 interface Category {

@@ -73,6 +73,7 @@ const SurveyForm = () => {
       setError(null);
     } catch (err) {
       setError('Failed to submit survey responses. Please try again.');
+      alert('Failed to submit survey responses. Please reach out to Agile Chapter.');
     }
   };
 
