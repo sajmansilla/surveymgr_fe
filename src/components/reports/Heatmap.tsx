@@ -10,7 +10,7 @@ const Heatmap = ({ data, width = 800, height = 500 }) => {
       team.scores
         .filter(
           (category) =>
-            category.category_id !== 0 &&
+            category.category_id == 0 ||
             category.questions.every((q) => q.calc_method !== "Aggregate")
         )
         .map((category) => ({

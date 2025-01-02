@@ -303,9 +303,7 @@ const words = [
             </Card>
           
           <br></br>
-          <div>
-                <AggregateHighlightsWordCloud data={surveyData} />
-    </div>
+         
     <div> 
     <Card>
               <CardHeader>
@@ -317,7 +315,10 @@ const words = [
                 </div>
               </CardContent>
             </Card>
-      </div>
+      </div><br></br>
+      <div>
+                <AggregateHighlightsWordCloud data={surveyData} />
+    </div>
         </div>
       </div>
     </div>
