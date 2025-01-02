@@ -304,21 +304,42 @@ const words = [
           
           <br></br>
          
-    <div> 
-    <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Achievements and Wishes</CardTitle>
-              </CardHeader>
-              <CardContent>
-              <div className="text-left w-full p-4 rounded-lg shadow-md bg-white">
-              <QuestionSummarizer data={surveyData} />
-                </div>
-              </CardContent>
-            </Card>
-      </div><br></br>
-      <div>
-                <AggregateHighlightsWordCloud data={surveyData} />
-    </div>
+          <div>
+  <Card>
+    <CardHeader>
+      <CardTitle className="text-lg">Achievements and Wishes</CardTitle>
+    </CardHeader>
+    <CardContent>
+      {surveyData.some((survey) =>
+        survey.scores.some((category) =>
+          category.questions?.some((question) => question.calc_method === "Aggregate")
+        )
+      ) ? (
+        <div className="text-left w-full p-4 rounded-lg shadow-md bg-white">
+          {console.log('surveyData', surveyData)}
+          <QuestionSummarizer data={surveyData} />
+        </div>
+      ) : (
+        <div className="text-center text-gray-600 text-sm">
+                               No data available for the selected survey. Please ensure data is available.
+
+        </div>
+      )}
+    </CardContent>
+  </Card>
+  <br />
+  <div>
+    {surveyData.some((survey) =>
+      survey.scores.some((category) =>
+        category.questions?.some((question) => question.calc_method === "Aggregate")
+      )
+    ) ? (
+      <AggregateHighlightsWordCloud data={surveyData} />
+    ) : null}
+  </div>
+</div>
+
+
         </div>
       </div>
     </div>
