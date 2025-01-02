@@ -316,7 +316,6 @@ const words = [
         )
       ) ? (
         <div className="text-left w-full p-4 rounded-lg shadow-md bg-white">
-          {console.log('surveyData', surveyData)}
           <QuestionSummarizer data={surveyData} />
         </div>
       ) : (
