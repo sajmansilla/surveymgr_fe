@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback} from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams ,useParams} from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell,ResponsiveContainer, Label} from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -44,11 +44,18 @@ interface SurveyDataInterface {
     
   }[]; }
 
+  interface TokenInfo {
+    survey_id : number,
+    team_id : number
 
+  }
 export default function OverallReport() {
   // State Variables
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [surveyData, setSurveyData] = useState<SurveyDataInterface[]>([]);
+  const [tokenInfo, setTokenInfo] = useState<TokenInfo[]>([]);
+
+  const {token } = useParams(); // Get params from URL
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -73,14 +80,38 @@ export default function OverallReport() {
     }
   }, [fetchSurveys, surveys]);
 
-  // Derived Values
- 
-  const paramSurveyId = searchParams.get('surveyId');
 
-  const currentSurveyId = useMemo(() => {
-    const defaultId = surveys.length > 0 ? surveys[0].id : null;
-    return paramSurveyId ? Number(paramSurveyId) : defaultId;
-  }, [paramSurveyId, surveys]);
+  
+  // Effect to get the token info if it is sent
+  useEffect(() => {
+    const getTokenInfo = async () => {
+      try {
+        if (token != null){
+            // Validate token with the API
+            const response = await fetch(`${apiUrl}/api/tokenInfo/${token}`);
+
+            if (!response.ok) {
+              throw new Error('Error in getting token info');
+            }
+
+            const tokenInfo = await response.json();
+            setTokenInfo(tokenInfo);
+      }
+      } catch (error) {
+        console.error('Error when validating the token:', error);
+      } 
+    };
+    getTokenInfo();
+  }, [token]);
+
+  // Handel the survey ID based on the sent parmas , extract it from the token or from surveyId parma or from survey array
+  
+const paramSurveyId = searchParams.get('surveyId');
+const currentSurveyId = useMemo(() => {
+  const defaultId = surveys.length > 0 ? surveys[0].id : null;
+  // Use tokenInfo.survey_id if available, else paramSurveyId, else defaultId
+  return tokenInfo?.survey_id ?? (paramSurveyId ? Number(paramSurveyId) : defaultId);
+}, [tokenInfo, paramSurveyId, surveys]);
 
   const currentSurvey = useMemo(
     () => surveys.find((survey) => survey.id === currentSurveyId),
@@ -126,7 +157,6 @@ useEffect(() => {
         };
       });
       setSurveyData(overallReportData);
-//console.log('overallReportData',overallReportData);
     } catch (error) {
       console.error('Failed to fetch report data:', error);
     }
@@ -137,8 +167,6 @@ useEffect(() => {
 
 
 /// prepare recommended teams pie charts data
-//console.log('surveyData >>>',surveyData);
-
 
 const recommendedTeams = useMemo(() => {
   if (!surveyData || surveyData.length === 0) {
@@ -167,20 +195,14 @@ const recommendedTeams = useMemo(() => {
   [navigate]
 );
 ///// end handle the survey list menu////
-///// handle the word cloud ///
-const words = [
-  { text: "Collaboration", value: 50 },
-  { text: "Trust", value: 30 },
-  { text: "Accountability", value: 20 },
-  { text: "Conflict", value: 40 },
-  { text: "Focus", value: 60 },
-  { text: "Commitment", value: 35 },
-];
+
   return (
+    
     <div className="min-h-screen bg-white">
       <div className="flex min-h-[calc(100vh-112px)]">
-        {/* Survey List */}
-        <div className="w-64 border-r bg-white p-6">
+        {/* Survey List to be displayed if no token is sent */}
+        {!token && (
+          <div className="w-64 border-r bg-white p-6">
         <div className="text-xl font-semibold mb-4 text-left" >Survey List</div>
           <div className="space-y-2">
             {surveys.map((survey) => (
@@ -197,42 +219,46 @@ const words = [
           </div>
         </div>
 
+
+        )}
+          
         {/* Report Content */}
         <div className="flex-1 p-6">
           
-         
-  <div className="flex justify-end mb-8">
+   {/*display the team combo box only if the token is not sent*/}
+    {!token && (
+        <div className="flex justify-end mb-8">
           <Select
-          defaultValue="overallReport"
-          onValueChange={(value) => {
-            if (value === "overallReport") {
-              // Redirect to overall report with currentSurveyId
-              navigate(`?surveyId=${currentSurveyId}`);
-            } else {
-              navigate(`/reports?surveyId=${currentSurveyId}&teamId=${value}`); // Navigate with teamId
-            }
-          }}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Overall Report" />
-          </SelectTrigger>
-          <SelectContent>
-          
-            {/* Overall Report Option */}
-            <SelectItem value="overallReport" >Overall  Report</SelectItem>
-            {/* Dynamic Team Report Options */}
-            {uniqueTeamNames.map((teamName, index) => (
-              <SelectItem
-                key={`${currentSurveyId}-${index}`}
-                value={uniqueTeamIds[index]}
-              >
-                Team {teamName} Report 
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            defaultValue="overallReport"
+            onValueChange={(value) => {
+              if (value === "overallReport") {
+                // Redirect to overall report with currentSurveyId
+                navigate(`?surveyId=${currentSurveyId}`);
+              } else {
+                navigate(`/reports?surveyId=${currentSurveyId}&teamId=${value}`); // Navigate with teamId
+              }
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Overall Report" />
+            </SelectTrigger>
+            <SelectContent>
+              {/* Overall Report Option */}
+              <SelectItem value="overallReport">Overall Report</SelectItem>
+              {/* Dynamic Team Report Options */}
+              {uniqueTeamNames.map((teamName, index) => (
+                <SelectItem
+                  key={`${currentSurveyId}-${index}`}
+                  value={uniqueTeamIds[index]}
+                >
+                  Team {teamName} Report
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+)}
 
-  </div>
   <div className="text-xl font-semibold mb-4">
 
             Overall Survey : {currentSurvey?.name} Report
