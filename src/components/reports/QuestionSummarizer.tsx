@@ -94,12 +94,13 @@ const QuestionSummarizer: React.FC<AggregateQuestionSummarizerProps> = ({ data }
     <div>
       {summaries.map((summary, index) => (
         <div key={index} style={{ marginBottom: "1.5rem" }}>
-          <strong>{summary.question}</strong>
+          <p className="text-left text-blue-600 mb-1 font-bold">{summary.question}</p>
+
           <p>
-            <strong>Summary:</strong> {summary.summary}
+          <p className="text-left text-blue-600 mb-1 underline">Summary:</p>{summary.summary}
           </p>
           <div>
-            <strong>Top Highlights:</strong>
+          <p className="text-left text-blue-600 mb-1 underline">Top Highlights:</p>
             <ol style={{ paddingLeft: "1.5rem" }}>
               {summary.topHighlights.map((highlight, highlightIndex) => (
                 <li key={highlightIndex}>

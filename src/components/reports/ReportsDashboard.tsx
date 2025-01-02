@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {PieChart,Pie,Cell,BarChart, Bar,XAxis,YAxis,ResponsiveContainer,Tooltip,ReferenceLine,Label,LineChart,Line,Legend,} from 'recharts';
+import QuestionSummarizerByTeam from "./QuestionSummarizerByTeam";
 
 
 
@@ -662,9 +663,15 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
                       <div key={idx}>{line}</div>
                     ))}
                   </div>
+                  
                 </div>
               ))}
-            </div>
+            </div> <br></br>
+            <div className="text-center text-gray-600 text-sm">
+            <p className="text-lg">{category.category_name} Highlights</p>
+              </div> <br></br><div className="text-left w-full p-4 rounded-lg shadow-md bg-white">
+          <QuestionSummarizerByTeam selectedTeamData={selectedTeamData} />
+        </div>
           </CardContent>
         </Card>
       ) : null;
