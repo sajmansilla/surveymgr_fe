@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback} from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate,useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {PieChart,Pie,Cell,BarChart, Bar,XAxis,YAxis,ResponsiveContainer,Tooltip,ReferenceLine,Label,LineChart,Line,Legend,} from 'recharts';
@@ -47,6 +47,12 @@ interface SurveyDataInterface {
     survey: string;
     [category: string]: string | number;
   }
+
+  interface TokenInfo {
+    survey_id : number,
+    team_id : number
+
+  }
 export default function ReportsDashboard() {
   // State Variables
   const [surveys, setSurveys] = useState<Survey[]>([]);
@@ -54,9 +60,10 @@ export default function ReportsDashboard() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoriesTrend, setCategoriesTrend] = useState<TrendData[]>([]);
   const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
-
+  const [tokenInfo, setTokenInfo] = useState<TokenInfo[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const {token,surveyId,teamId} = useParams(); // Get params from URL
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   // Reusable function to fetch surveys
   const fetchSurveys = useCallback(async () => {
@@ -78,18 +85,50 @@ export default function ReportsDashboard() {
     }
   }, [fetchSurveys, surveys]);
 
+
+
+  useEffect(() => {
+    const getTokenInfo = async () => {
+      try {
+        if (token != null) {
+          // Validate token with the API
+          const response = await fetch(`${apiUrl}/api/tokenInfo/${token}`);
+  
+          if (!response.ok) {
+            throw new Error('Error in getting token info');
+          }
+  
+          const tokenInfo = await response.json();
+          setTokenInfo(tokenInfo);
+        }
+      } catch (error) {
+        console.error('Error when validating the token:', error);
+  
+        // Ensure the error message is a string
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setError('The token is invalid or expired.');
+  
+        // Pass the error message as a string in state
+        navigate('/error', { state: { error: errorMessage } });
+      }
+    };
+  
+    getTokenInfo();
+  }, [token, apiUrl, navigate]);
+  
+
   // Get current Survey Info
-  const paramSurveyId = searchParams.get('surveyId');
+ 
   const currentSurveyId = useMemo(() => {
     const defaultId = surveys.length > 0 ? surveys[0].id : null;
-    return paramSurveyId ? Number(paramSurveyId) : defaultId;
-  }, [paramSurveyId, surveys]);
+    // Use tokenInfo.survey_id if available, else paramSurveyId, else defaultId
+    return tokenInfo?.survey_id ?? (surveyId ? Number(surveyId) : defaultId);
+  }, [tokenInfo, surveyId, surveys]);
+
   const currentSurvey = useMemo(
     () => surveys.find((survey) => survey.id === currentSurveyId),
     [surveys, currentSurveyId]
-  );
-
-   
+  ); 
 
 // Fetch Selected Survey Data//////////////
 
@@ -142,12 +181,12 @@ useEffect(() => {
 
  // Get current Team Info
 
- const paramSelectedTeamId = searchParams.get('teamId');
- const selectedTeam = useMemo(() => {
-    const defaultId = surveys.length > 0 ? surveys[0].id : null;
-    return paramSelectedTeamId ? Number(paramSelectedTeamId) : defaultId;
-  }, [paramSelectedTeamId, surveys]);
-  
+
+  const selectedTeam = useMemo(() => {
+    const defaultId = surveys.length > 0 ? surveys[0].teamIds[0] : null;
+    // Use tokenInfo.team_id if available, else paramSelectedTeamId, else defaultId
+    return tokenInfo?.team_id ?? (teamId ? Number(teamId) : defaultId);
+  }, [tokenInfo, teamId, surveys]);
 
 
  const getTeamData = (surveyData: Survey[][] | Survey[], selectedTeamId: number): Survey | null => {
@@ -209,32 +248,11 @@ const surveyOverview = useMemo(
   [selectedTeam, currentSurveyTeamResponseRate, selectedTeamData]
 );
 
-/// prepare recommended teams pie charts data
-
-
-const recommendedTeams = useMemo(() => {
-  if (!surveyData || surveyData.length === 0) {
-    return Array(4).fill({
-      name: 'No Data',
-      value: 0,
-      color: '#CCCCCC', // Default color for "No Data"
-    });
-  }
-
-  const colors = ['#FF7043', '#FF9800', '#FFB300','#FFD700']; // Colors for the first 3 teams
-
-  return surveyData.slice(0, 4).map((team, index) => ({
-    name: team.team_name ? `Team ${team.team_name} \n Response Rate: ${team.teamResponseRate}%` : 'No Data',
-    value: Number(team.normalizedScore) || 0, // Ensure value is numeric
-    color: colors[index] || '#CCCCCC', // Assign colors dynamically
-  }));
-}, [surveyData]);
-
 /// handle the survey list menu////
  const handleSurveyClick = useCallback(
   (surveyId: number) => {
    
-    navigate(`/reports/overallReport?surveyId=${surveyId}`);
+    navigate(`/reports/overallReport/${surveyId}`);
 
     
   },
@@ -293,6 +311,7 @@ const handleLegendClick = (e: any) => {
     <div className="min-h-screen bg-white">
       <div className="flex min-h-[calc(100vh-112px)]">
         {/* Survey List */}
+        {!token && (
         <div className="w-64 border-r bg-white p-6">
         <div className="text-xl font-semibold mb-4 text-left" >Survey List</div>
           <div className="space-y-2">
@@ -309,10 +328,11 @@ const handleLegendClick = (e: any) => {
             ))}
           </div>
         </div>
-
+        )}
         {/* Report Content */}
         <div className="flex-1 p-6">
-          
+          {/*display the team combo box only if the token is not sent*/}
+    {!token && (
          
   <div className="flex justify-end mb-8">
           <Select
@@ -320,9 +340,9 @@ const handleLegendClick = (e: any) => {
           onValueChange={(value) => {
             if (value === "overallReport") {
               // Redirect to overall report with currentSurveyId
-              navigate(`/reports/overallReport?surveyId=${currentSurveyId}`);
+              navigate(`/reports/overallReport/${currentSurveyId}`);
             } else {
-              navigate(`?surveyId=${currentSurveyId}&teamId=${value}`); // Navigate with teamId
+              navigate(`/reports/${currentSurveyId}/${value}`); // Navigate with teamId
             }
           }}
         >
@@ -347,6 +367,7 @@ const handleLegendClick = (e: any) => {
         </Select>
 
   </div> 
+  )}
   <div className="text-xl font-semibold mb-4">
             Survey {currentSurvey?.name} ::: Team {selectedTeamData?.team_name} ::: Self Assessment Report
 

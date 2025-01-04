@@ -23,7 +23,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isErrorPage = location.pathname.includes('/error') // Hide header on error page
   const isThanksPage = location.pathname.includes('/thanks') // Hide header on Thanks page
   const isViewOverallReport = location.pathname.includes('/viewOverallReport')
-  const hideHeader = isLandingPage || isSurveyForm || isErrorPage || isThanksPage || isViewOverallReport;
+  const isViewTeamReport = location.pathname.includes('/viewTeamReport')
+  const hideHeader = isLandingPage || isSurveyForm || isErrorPage || isThanksPage || isViewOverallReport || isViewTeamReport;
 
   return (
     <>
@@ -52,8 +53,12 @@ function App() {
           <Route path="/questions" element={<AddQuestions />} />
           <Route path="/create-survey" element={<CreateSurvey />} />
           <Route path="/reports" element={<ReportsDashboard />} />
+          <Route path="/reports/:surveyId/:teamId" element={<ReportsDashboard />} />
+          <Route path="/viewTeamReport/:token" element={<ReportsDashboard />} />
           <Route path="/reports/overallReport" element={<OverallReport />} />
-          <Route path="/reports/viewOverallReport/:token" element={<OverallReport />} />
+          <Route path="/reports/overallReport/:surveyId" element={<OverallReport />} />
+          <Route path="/viewOverallReport/:token" element={<OverallReport />} />
+          <Route path="/viewOverallReport/:token/:surveyId" element={<OverallReport />} />
           <Route path="/reports/:survey_id" element={<ReportsDashboard />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route path="/thanks" element={<ThanksPage />} />

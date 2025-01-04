@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback} from 'react';
-import { useNavigate, useSearchParams ,useParams} from 'react-router-dom';
+import { useNavigate,useParams,useLocation} from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell,ResponsiveContainer, Label} from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -54,11 +54,21 @@ export default function OverallReport() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [surveyData, setSurveyData] = useState<SurveyDataInterface[]>([]);
   const [tokenInfo, setTokenInfo] = useState<TokenInfo[]>([]);
-
-  const {token } = useParams(); // Get params from URL
-
+  const [error, setError] = useState<string | null>(null);
+  const {token,surveyId } = useParams(); // Get params from URL
+  const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const isViewOverallReport = location.pathname.includes('/viewOverallReport');// Check if the current path includes '/viewOverallReport'
+
+
+  // Navigate to error page if the token is not provided when we are trying to view the report
+  useEffect(() => {
+    if (token == null && isViewOverallReport) {
+      // If the token is invalid, redirect to the error page with the error message in the state
+      setError('Token is missing, please porvide the required token.');
+      navigate('/error', { state: { error } }); // Passing the error message in the state
+    }
+  }, [isViewOverallReport, navigate, error]);
 
   // Reusable function to fetch surveys
   const fetchSurveys = useCallback(async () => {
@@ -82,36 +92,49 @@ export default function OverallReport() {
 
 
   
-  // Effect to get the token info if it is sent
   useEffect(() => {
     const getTokenInfo = async () => {
       try {
-        if (token != null){
-            // Validate token with the API
-            const response = await fetch(`${apiUrl}/api/tokenInfo/${token}`);
-
-            if (!response.ok) {
-              throw new Error('Error in getting token info');
-            }
-
-            const tokenInfo = await response.json();
-            setTokenInfo(tokenInfo);
-      }
+        if (token != null) {
+          // Validate token with the API
+          const response = await fetch(`${apiUrl}/api/tokenInfo/${token}`);
+  
+          if (!response.ok) {
+            throw new Error('Error in getting token info');
+          }
+  
+          const tokenInfo = await response.json();
+          setTokenInfo(tokenInfo);
+        }
       } catch (error) {
         console.error('Error when validating the token:', error);
-      } 
+  
+        // Ensure the error message is a string
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setError('The token is invalid or expired.');
+  
+        // Pass the error message as a string in state
+        navigate('/error', { state: { error: errorMessage } });
+      }
     };
+  
     getTokenInfo();
-  }, [token]);
+  }, [token, apiUrl, navigate]);
+  
 
   // Handel the survey ID based on the sent parmas , extract it from the token or from surveyId parma or from survey array
   
-const paramSurveyId = searchParams.get('surveyId');
+
 const currentSurveyId = useMemo(() => {
   const defaultId = surveys.length > 0 ? surveys[0].id : null;
-  // Use tokenInfo.survey_id if available, else paramSurveyId, else defaultId
-  return tokenInfo?.survey_id ?? (paramSurveyId ? Number(paramSurveyId) : defaultId);
-}, [tokenInfo, paramSurveyId, surveys]);
+  // Return surveyId if it exists, else token, else defaultId
+  return surveyId
+    ? Number(surveyId)
+    : tokenInfo?.survey_id
+    ? tokenInfo.survey_id
+    : defaultId;
+}, [surveyId, tokenInfo, surveys]);
+
 
   const currentSurvey = useMemo(
     () => surveys.find((survey) => survey.id === currentSurveyId),
@@ -187,12 +210,20 @@ const recommendedTeams = useMemo(() => {
 }, [surveyData]);
 
 /// handle the survey list menu////
- const handleSurveyClick = useCallback(
+const handleSurveyClick = useCallback(
   (surveyId: number) => {
-    navigate(`?surveyId=${surveyId}`);
+   
+
     
+
+    // Conditionally navigate based on the current path
+    if (isViewOverallReport) {
+      navigate(`/viewOverallReport/${token}/${surveyId}`);
+    } else {
+      navigate(`/reports/overallReport/${surveyId}`);
+    }
   },
-  [navigate]
+  [useLocation, useNavigate] // Dependencies: ensure proper reactivity
 );
 ///// end handle the survey list menu////
 
@@ -200,8 +231,7 @@ const recommendedTeams = useMemo(() => {
     
     <div className="min-h-screen bg-white">
       <div className="flex min-h-[calc(100vh-112px)]">
-        {/* Survey List to be displayed if no token is sent */}
-        {!token && (
+        {/* Survey List  */}
           <div className="w-64 border-r bg-white p-6">
         <div className="text-xl font-semibold mb-4 text-left" >Survey List</div>
           <div className="space-y-2">
@@ -220,7 +250,6 @@ const recommendedTeams = useMemo(() => {
         </div>
 
 
-        )}
           
         {/* Report Content */}
         <div className="flex-1 p-6">
@@ -235,7 +264,7 @@ const recommendedTeams = useMemo(() => {
                 // Redirect to overall report with currentSurveyId
                 navigate(`?surveyId=${currentSurveyId}`);
               } else {
-                navigate(`/reports?surveyId=${currentSurveyId}&teamId=${value}`); // Navigate with teamId
+                navigate(`/reports/${currentSurveyId}/${value}`); // Navigate with teamId
               }
             }}
           >
