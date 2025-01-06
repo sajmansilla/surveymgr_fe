@@ -340,22 +340,24 @@ const handleSurveyClick = useCallback(
         <br></br>
 
           {/* Teams Heatmap */}
-          
-            <Card>
+          <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Teams Heatmap</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center text-gray-600 text-sm">
-                  {surveyData.some((team) => team.scores.length > 0) ? (
-                <Heatmap data={surveyData} />
-                    ) : (
-                      <p>   No data available for the selected survey. Please ensure data is available.
-                      </p>
-                    )}
+                  {surveyData.some(
+                    (team) =>
+                      team.scores.length > 0 && !isNaN(parseFloat(team.normalizedScore))
+                  ) ? (
+                    <Heatmap data={surveyData} />
+                  ) : (
+                    <p>No data available for the selected survey. Please ensure data is available.</p>
+                  )}
                 </div>
               </CardContent>
-            </Card>
+          </Card>
+
           
           <br></br>
          
