@@ -155,7 +155,6 @@ useEffect(() => {
       });
       if (!response.ok) throw new Error(`Error: ${response.statusText}`);
       const result = await response.json();
-     //console.log('result from overall ',result);
 
       // Enrich the surveyData with team names
       const overallReportData = result.category_scores.map((scoreData) => {
@@ -190,6 +189,8 @@ useEffect(() => {
 
 
  const getTeamData = (surveyData: Survey[][] | Survey[], selectedTeamId: number): Survey | null => {
+
+
   // Handle the case where surveyData is not nested
   if (!Array.isArray(surveyData[0])) {
     return (surveyData as Survey[]).find((survey) => survey.teamId === selectedTeamId) || null;
@@ -524,7 +525,7 @@ const handleLegendClick = (e: any) => {
 </div>
 <br></br>
 {/* Category Numeric Questions Card */}
-{selectedTeam === "0" || !selectedTeamData ? (
+{selectedTeam === "0" || !selectedTeamData || selectedTeamData.scores.filter(score => score.category_id !== 0 && score.score !== null).length <= 0 ? (
   <Card>
     <CardHeader>
       <CardTitle>Category Questions</CardTitle>
