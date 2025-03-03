@@ -53,7 +53,7 @@ interface SurveyDataInterface {
     team_id : number
 
   }
-export default function ReportsDashboard() {
+export default function TeamReportsPDF() {
   // State Variables
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [surveyData, setSurveyData] = useState<SurveyDataInterface[]>([]);
@@ -207,6 +207,8 @@ useEffect(() => {
 };
 
 const selectedTeamData = getTeamData(surveyData, Number(selectedTeam));
+console.log ("selectedTeamData",selectedTeamData);
+
 
 
 //// prepare the team overview 
@@ -369,7 +371,7 @@ const handleLegendClick = (e: any) => {
 
   </div> 
   )}
-  <div className="text-xl font-semibold mb-4">
+  <div className="text-2xl font-semibold mb-4">
             Survey {currentSurvey?.name} ::: Team {selectedTeamData?.team_name} ::: Self Assessment Report
 
           </div>
@@ -378,9 +380,9 @@ const handleLegendClick = (e: any) => {
             {/* Survey Overview Card */}
             <Card>
               <CardHeader>
-              <CardTitle>Survey Overview</CardTitle>
+              <CardTitle className="text-xl ">Survey Overview</CardTitle>
               </CardHeader>
-              <CardContent className="flex justify-around h-[200px]">
+              <CardContent className="flex justify-around h-[150px]">
                 {
                 
                 surveyOverview.map((data, index) => {
@@ -418,180 +420,110 @@ const handleLegendClick = (e: any) => {
             </Card>
           </div>
         <br></br>
-                {/* Grid with Team Scores and Conditional Credit Rating/Category Advice */}
-<div className="grid md:grid-cols-2 gap-6">
-  {/* Team Scores Card */}
+ {/* Grid with Team Scores and Questions */}
+<div >
 
-  {selectedTeam === "0" || !selectedTeamData || selectedTeamData.scores.filter(score => score.category_id !== 0 && score.score !== null).length <= 0 ? (
-    <Card>
-      <CardHeader>
-        <CardTitle>Team Scores</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-center text-gray-600 text-sm">
-          No team selected. Please select a team to view the scores.
-        </div>
-      </CardContent>
-    </Card>
-  ) : (
-    <Card>
-      <CardHeader>
-        <CardTitle>Team Scores </CardTitle>
-       
-        
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart
-            data={selectedTeamData.scores.filter(score => score.category_id !== 0 && score.score !== null)}
-            layout="vertical"
-            margin={{ left: 30 }}
-          >
-            <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
-            <YAxis dataKey="category_name" type="category" interval={0} tick={{ fontSize: 12 }} />
-            <Tooltip contentStyle={{ fontSize: '12px' }} />
-            <ReferenceLine x={currentSurvey?.lowerThreshold} stroke="red" strokeDasharray="3 3" />
-            <ReferenceLine x={currentSurvey?.upperThreshold} stroke="green" strokeDasharray="3 3" />
-            <Bar
-              dataKey="score"
-              name="Score"
-              onClick={(data) => {
-                setSelectedCategory(data);
-                
-              }}
-             
-              shape={(props: { payload?: any; x?: any; y?: any; width?: any; height?: any; }) => {
-                const { x, y, width, height } = props;
-                const barColor =
-                  props.payload.adviceColor === 'green' ? '#4CAF50' :
-                    props.payload.adviceColor === 'red' ? '#FF5722' :
-                      props.payload.adviceColor === 'yellow' ? '#FF9800' :
-                        '#FF9800'; // Default color
-                return <rect x={x} y={y} width={width} height={height} fill={barColor} />;
-              }}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  )}
-
-  {/* Conditional Rendering: Category Recommendations */}
-  {selectedTeam === "0" || !selectedTeamData || selectedTeamData.scores.filter(score => score.category_id !== 0 && score.score !== null).length <= 0 ? (
-    <Card>
-      <CardHeader>
-        <CardTitle>Category Recommendations</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-center text-gray-600 text-sm">
-          No team selected. Please select a team to view the recommendations.
-        </div>
-      </CardContent>
-    </Card>
-  ) : (
-    <Card>
-      <CardHeader>
-        <CardTitle>Category Recommendations</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {selectedCategory ? (
-          <div
-            className={`flex flex-col p-4 rounded-lg shadow-md ${selectedCategory.adviceColor === 'green' ? 'bg-green-100' :
-              selectedCategory.adviceColor === 'red' ? 'bg-red-100' :
-                selectedCategory.adviceColor === 'yellow' ? 'bg-orange-100' :
-                  'bg-gray-50' // Default color
-              }`}
-          >
-            <div style={{ fontSize: '16px', color: 'black', fontWeight: '500' }}>{selectedCategory.category_name}</div>
-            <div className="text-sm text-gray-700 mt-2">{selectedCategory.advice}</div>
-          </div>
-        ) : (
-          selectedTeamData.scores.filter(score => score.category_id !== 0 && score.score !== null).length > 0 && (
-            <div
-              className={`flex flex-col p-4 rounded-lg shadow-md ${selectedTeamData.scores[0].adviceColor === 'green' ? 'bg-green-100' :
-                selectedTeamData.scores[0].adviceColor === 'red' ? 'bg-red-100' :
-                  selectedTeamData.scores[0].adviceColor === 'yellow' ? 'bg-orange-100' :
-                    'bg-gray-50' // Default color
-                }`}
-            >
-              <div style={{ fontSize: '16px', color: 'black', fontWeight: '500' }}>
-                {selectedTeamData.scores[0].category_name}
-              </div>
-              <div className="text-sm text-gray-700 mt-2">
-                {selectedTeamData.scores[0].advice}
-              </div>
-            </div>
-          )
-        )}
-      </CardContent>
-    </Card>
-  )}
-</div>
-<br></br>
-{/* Category Numeric Questions Card */}
+{/* Team Scores Card (First Row) */}
 {selectedTeam === "0" || !selectedTeamData || selectedTeamData.scores.filter(score => score.category_id !== 0 && score.score !== null).length <= 0 ? (
   <Card>
     <CardHeader>
-      <CardTitle>Category Questions</CardTitle>
+      <CardTitle className="text-2xl font-bold">Team Scores</CardTitle>
     </CardHeader>
-    <CardContent>
+    <CardContent className="flex justify-center items-center">
       <div className="text-center text-gray-600 text-sm">
-        No team selected. Please select a team to view the questions.
+        No team selected. Please select a team to view the scores.
       </div>
     </CardContent>
   </Card>
 ) : (
-  <Card>
+  <Card >
     <CardHeader>
-      <CardTitle>
-        {selectedCategory
-          ? `Category "${selectedCategory.category_name}" Questions`
-          : selectedTeamData.scores.length > 0
-          ? `Category "${selectedTeamData.scores[0].category_name}" Questions`
-          : "Category Questions"}
-      </CardTitle>
+      <CardTitle className="text-xl ">Team Scores</CardTitle>
     </CardHeader>
-    <CardContent>
-      <div className="text-gray-600 text-sm w-full">
-        {selectedTeamData.scores.length > 0 ? (
-          selectedTeamData.scores
-            .filter((score) =>
-              selectedCategory
-                ? score.category_id === selectedCategory.category_id
-                : score.category_id === selectedTeamData.scores[0]?.category_id
-            )
-            .map((score) => (
-              <div
-                key={score.category_id}
-                className="w-full p-4 rounded-lg shadow-md bg-white"
-              >
-                <ul className="mt-2 space-y-2 text-left w-full">
-                  {score.questions
-                    ?.filter((question) => question.calc_method === "Avg")
-                    .map((question, index) => (
-                      <li
-                        key={`${score.category_id}-${index}`}
-                        className="grid grid-cols-[3fr_1fr] gap-4 items-center w-full"
-                      >
-                        <span>
-                          {index + 1}. {question.question}
-                        </span>
-                        <span className="font-semibold text-gray-700 text-right">
-                          Score: "{question.Score}"
-                        </span>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ))
-        ) : (
-          <span>No data available</span>
-        )}
-      </div>
+    <CardContent className="flex justify-center items-center">
+      <ResponsiveContainer width="90%" height={300}>
+        <BarChart
+          data={selectedTeamData.scores.filter(score => score.category_id !== 0 && score.score !== null)}
+          layout="vertical"
+          margin={{ left: 30 }}
+        >
+          <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 12 }} />
+          <YAxis dataKey="category_name" type="category" interval={0} tick={{ fontSize: 12 }} />
+          <Tooltip contentStyle={{ fontSize: '12px' }} />
+          <ReferenceLine x={currentSurvey?.lowerThreshold} stroke="red" strokeDasharray="3 3" />
+          <ReferenceLine x={currentSurvey?.upperThreshold} stroke="green" strokeDasharray="3 3" />
+          <Bar
+            dataKey="score"
+            name="Score"
+            
+            shape={(props: { payload?: any; x?: any; y?: any; width?: any; height?: any; }) => {
+              const { x, y, width, height } = props;
+              const barColor =
+                props.payload.adviceColor === 'green' ? '#4CAF50' :
+                props.payload.adviceColor === 'red' ? '#FF5722' :
+                props.payload.adviceColor === 'yellow' ? '#FF9800' :
+                '#FF9800'; // Default color
+              return <rect x={x} y={y} width={width} height={height} fill={barColor} />;
+            }}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </CardContent>
   </Card>
 )}
 <br></br>
+{/* Questions Card (Second Row - Columns for PDF Printing with Advice on Top) */}
+{selectedTeam === "0" || !selectedTeamData || selectedTeamData.scores.length === 0 ? null : (
+  <Card className="flex flex-col h-auto bg-white shadow-md">
+    <CardHeader>
+      <CardTitle className="text-xl ">Score Details</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="grid grid-cols-3 gap-4">
+        {selectedTeamData.scores
+          .filter(category => category.category_id !== 0 && category.category_id !== 8) // Exclude category_id 0 and 8
+          .map(category => {
+            // Determine background color based on adviceColor
+            const bgColor =
+              category.adviceColor === "green"
+                ? "bg-green-100"
+                : category.adviceColor === "red"
+                ? "bg-red-100"
+                : category.adviceColor === "yellow"
+                ? "bg-orange-100"
+                : "bg-gray-100"; // Default background
+
+            return (
+              <div key={category.category_id} className={`border p-4 rounded-md shadow-sm ${bgColor}`}>
+                {/* Category Name */}
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{category.category_name}</h3>
+
+                {/* Advice Section (Now included inside the category) */}
+                <p className="text-sm font-medium mb-2 text-black">
+                  <strong>Advice:</strong> {category.advice ? category.advice : "No advice available."}
+                </p>
+                <hr className="mb-2 border-gray-400" /> {/* Line after advice */}
+
+                {/* Questions List */}
+                <ul className="space-y-2">
+                  {category.questions.map((question, index) => (
+                    <li key={index} className="flex flex-col border-b pb-1 text-sm">
+                      <span className="text-gray-700"><strong>Q{index + 1}:</strong> {question.question}</span>
+                      <span className="font-semibold text-gray-900">Score: {question.Score}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+      </div>
+    </CardContent>
+  </Card>
+)}
+</div>
+<br />
+
+
 {/* Category Trend Card */}
 
              
@@ -611,7 +543,7 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
 ) : categoriesTrend.length > 0 && categoriesTrend[0] ? (
   <Card className="w-full">
     <CardHeader>
-      <CardTitle>Categories Trend data </CardTitle>
+      <CardTitle className="text-xl ">Categories Trend  </CardTitle>
     </CardHeader>
     <CardContent className="flex justify-center items-center">
       <ResponsiveContainer width="100%" height={300}>
@@ -653,7 +585,7 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
     </CardContent>
   </Card>
 )}
-        <br></br>
+        <br></br> <br></br> <br></br>
     {/* Category Non-Numeric Questions Card */}
 {selectedTeam !== "0" && selectedTeamData?.scores?.length > 0 ? (
   selectedTeamData.scores
@@ -671,7 +603,7 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
         <Card key={category.category_id} className="mb-6">
           {/* Card Header: Centered Category Name */}
           <CardHeader className="text-center">
-            <CardTitle className="text-lg">{category.category_name}</CardTitle>
+            <CardTitle className="text-xl">{category.category_name}</CardTitle>
           </CardHeader>
 
           {/* Card Content: Questions and Scores */}
@@ -692,9 +624,9 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
                   
                 </div>
               ))}
-            </div> <br></br>
+            </div> <br></br><br></br><br></br><br></br>
             <div className="text-center text-gray-600 text-sm">
-            <p className="text-lg">{category.category_name} Highlights</p>
+            <p className="text-xl ">{category.category_name} Highlights</p>
               </div> <br></br><div className="text-left w-full p-4 rounded-lg shadow-md bg-white">
           <QuestionSummarizerByTeam selectedTeamData={selectedTeamData} />
         </div>
@@ -713,3 +645,4 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
     </div>
   );
 }
+

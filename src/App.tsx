@@ -13,6 +13,9 @@ import { OverallReport } from '@/components/reports';
 import { ViewSurvey } from '@/components/viewsurvey';
 import Header from '@/components/Header';
 import ThanksPage from '@/components/surveys/ThanksPage';
+import { TeamReportsPDF } from '@/components/reports';
+
+
 import '@/App.css';
 
 // Componente para condicionalmente renderizar el Header
@@ -24,7 +27,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isThanksPage = location.pathname.includes('/thanks') // Hide header on Thanks page
   const isViewOverallReport = location.pathname.includes('/viewOverallReport')
   const isViewTeamReport = location.pathname.includes('/viewTeamReport')
-  const hideHeader = isLandingPage || isSurveyForm || isErrorPage || isThanksPage || isViewOverallReport || isViewTeamReport;
+  const isViewTeamReportPDF = location.pathname.includes('/viewTeamReportPDF')
+
+  const hideHeader = isLandingPage || isSurveyForm || isErrorPage || isThanksPage || isViewOverallReport || isViewTeamReport || isViewTeamReportPDF;
 
   return (
     <>
@@ -55,6 +60,7 @@ function App() {
           <Route path="/reports" element={<ReportsDashboard />} />
           <Route path="/reports/:surveyId/:teamId" element={<ReportsDashboard />} />
           <Route path="/viewTeamReport/:token" element={<ReportsDashboard />} />
+          <Route path="/viewTeamReportPDF/:token" element={<TeamReportsPDF />} />
           <Route path="/reports/overallReport" element={<OverallReport />} />
           <Route path="/reports/overallReport/:surveyId" element={<OverallReport />} />
           <Route path="/viewOverallReport/:token" element={<OverallReport />} />
