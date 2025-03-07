@@ -94,10 +94,10 @@ const QuestionSummarizerByTeam: React.FC<QuestionSummarizerProps> = ({ selectedT
           <p className="text-left text-blue-600 mb-1 font-bold">{question}</p>
           <div>
             <p className="text-left text-blue-600 mb-1 underline">Top Highlights:</p>
-            <ol style={{ paddingLeft: "1.5rem" }}>
+            <ol style={{ paddingLeft: "1.5rem" }}> 
               {highlights.map((highlight, highlightIndex) => (
                 <li key={highlightIndex}>
-                  {highlight.text} -{" "}
+                  {highlightIndex+1}) {highlight.text} -{" "}
                   <span style={{ fontStyle: "italic", color: "blue" }}>
                     mentioned by {highlight.percentage}% of responses
                   </span>

@@ -500,7 +500,7 @@ const handleLegendClick = (e: any) => {
 
                 {/* Advice Section (Now included inside the category) */}
                 <p className="text-sm font-medium mb-2 text-black">
-                  <strong>Advice:</strong> {category.advice ? category.advice : "No advice available."}
+                  <strong>Assessment: </strong> {category.advice ? category.advice : "No advice available."}
                 </p>
                 <hr className="mb-2 border-gray-400" /> {/* Line after advice */}
 
@@ -618,7 +618,7 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
                   {/* Answer/Score Row: Replace \n with new lines */}
                   <div className="text-left text-gray-700">
                     {question.Score.split("\n").map((line, idx) => (
-                      <div key={idx}>{line}</div>
+                      <div key={idx}>* {line}</div>
                     ))}
                   </div>
                   

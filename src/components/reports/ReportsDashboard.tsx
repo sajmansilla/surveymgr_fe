@@ -686,7 +686,7 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
                   {/* Answer/Score Row: Replace \n with new lines */}
                   <div className="text-left text-gray-700">
                     {question.Score.split("\n").map((line, idx) => (
-                      <div key={idx}>{line}</div>
+                      <div key={idx}>* {line}</div>
                     ))}
                   </div>
                   

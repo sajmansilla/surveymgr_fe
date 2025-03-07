@@ -395,7 +395,6 @@ const handleSurveyClick = useCallback(
   </div>
 </div>
 
-
         </div>
       </div>
     </div>

@@ -104,7 +104,7 @@ const QuestionSummarizer: React.FC<AggregateQuestionSummarizerProps> = ({ data }
             <ol style={{ paddingLeft: "1.5rem" }}>
               {summary.topHighlights.map((highlight, highlightIndex) => (
                 <li key={highlightIndex}>
-                  {highlight.text} -{" "}
+                 {highlightIndex+1})  {highlight.text} -{" "}
                   <span style={{ color: "blue", fontStyle: "italic" }}>
                     mentioned by {highlight.percentage}% of teams:{" "}
                     {highlight.teams.map((team, teamIndex) => (
