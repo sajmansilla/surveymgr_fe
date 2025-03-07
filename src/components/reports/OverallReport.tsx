@@ -383,16 +383,7 @@ const handleSurveyClick = useCallback(
       )}
     </CardContent>
   </Card>
-  <br />
-  <div>
-    {surveyData.some((survey) =>
-      survey.scores.some((category) =>
-        category.questions?.some((question) => question.calc_method === "Aggregate")
-      )
-    ) ? (
-      <AggregateHighlightsWordCloud data={surveyData} />
-    ) : null}
-  </div>
+ 
 </div>
 
         </div>
