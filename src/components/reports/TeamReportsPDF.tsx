@@ -621,7 +621,7 @@ selectedTeam === "0" && categoriesTrend.length <= 0? (
                       <div key={idx}>* {line}</div>
                     ))}
                   </div>
-                  
+                   
                 </div>
               ))}
             </div> <br></br><br></br><br></br><br></br>
