@@ -207,9 +207,6 @@ useEffect(() => {
 };
 
 const selectedTeamData = getTeamData(surveyData, Number(selectedTeam));
-console.log ("selectedTeamData",selectedTeamData);
-
-
 
 //// prepare the team overview 
 const currentSurveyTeamResponseRate = useMemo(() => {
@@ -481,7 +478,7 @@ const handleLegendClick = (e: any) => {
     <CardContent>
       <div className="grid grid-cols-3 gap-4">
         {selectedTeamData.scores
-          .filter(category => category.category_id !== 0 && category.category_id !== 8) // Exclude category_id 0 and 8
+          .filter(category => category.category_id !== 0 && category.category_name !== "Achievements and Wishes") // Exclude category Achievements and Wishes
           .map(category => {
             // Determine background color based on adviceColor
             const bgColor =
