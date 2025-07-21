@@ -23,8 +23,8 @@ import {
 const formSchema = z.object({
   teams: z.array(
     z.object({
-      name: z.string().min(2, "Team name must be at least 2 characters."),
-      description: z.string().optional(),
+      teamName: z.string().min(2, "Team name must be at least 2 characters."),
+      teamDescription: z.string().optional(),
     })
   ),
 });
@@ -35,7 +35,7 @@ const AddTeams = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      teams: [{ name: "", description: "" }],
+      teams: [{ teamName: "", teamDescription: "" }],
     },
   });
 
@@ -65,11 +65,11 @@ const AddTeams = () => {
   };
 
   const handleAddTeam = () => {
-    append({ name: "", description: "" });
+    append({ teamName: "", teamDescription: "" });
   };
 
   const handleContinueAdding = () => {
-    reset({ teams: [{ name: "", description: "" }] }); // Reiniciar formulario
+    reset({ teams: [{ teamName: "", teamDescription: "" }] }); // Reset form
     setSuccess(false);
   };
 
@@ -109,7 +109,7 @@ const AddTeams = () => {
                       <TableCell>
                         <FormField
                           control={control}
-                          name={`teams.${index}.name`}
+                          name={`teams.${index}.teamName`}
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
@@ -127,7 +127,7 @@ const AddTeams = () => {
                       <TableCell>
                         <FormField
                           control={control}
-                          name={`teams.${index}.description`}
+                          name={`teams.${index}.teamDescription`}
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
